@@ -1,37 +1,39 @@
 import os
 import ijson
 import psycopg2
-import logging
 from dotenv import load_dotenv
 
-DATABASE_URL = "postgresql://postgres:password@localhost:5432/vct-manager"
+# Load environment variables from .env file
+load_dotenv('/home/colin/vct-esports-manager/.env')
 
-# Set up logging configuration
-logging.basicConfig(
-    filename="errorlogs.txt",
-    level=logging.ERROR,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# Read database URL and base data directory from environment
+DATABASE_URL = os.getenv("DATABASE_URL")
+BASE_DATA_DIR = os.getenv("BASE_DATA_DIR")
+
+# Commenting out error logging configuration
+# logging.basicConfig(
+#     filename="errorlogs.txt",
+#     level=logging.ERROR,
+#     format="%(asctime)s - %(levelname)s - %(message)s"
+# )
 
 def create_connection():
     """
     Establishes a connection to the PostgreSQL database using the connection string.
     Returns the connection object if successful, otherwise returns None.
-    Logs an error message if connection fails.
     """
     try:
         connection = psycopg2.connect(DATABASE_URL)
         return connection
     except Exception as e:
         print(f"Error connecting to database: {e}")
-        logging.error(f"Error connecting to database: {e}")
+        # logging.error(f"Error connecting to database: {e}")
         return None
 
 def stream_events_from_json(filepath):
     """
     Streams events from a large JSON file to avoid loading everything into memory at once.
     Yields each event as a dictionary.
-    Logs an error message if file reading fails.
     """
     print(f"Streaming JSON data from file: {filepath}")
     try:
@@ -40,13 +42,12 @@ def stream_events_from_json(filepath):
                 yield event
     except Exception as e:
         print(f"Error streaming JSON data from file {filepath}: {e}")
-        logging.error(f"Error streaming JSON data from file {filepath}: {e}")
+        # logging.error(f"Error streaming JSON data from file {filepath}: {e}")
 
 def insert_event(connection, event_type, platform_game_id, tournament_type):
     """
     Inserts a new event into the 'events' table.
     Returns the event ID of the inserted event.
-    Logs an error and rolls back the transaction if insertion fails.
     """
     cursor = connection.cursor()
 
@@ -57,18 +58,14 @@ def insert_event(connection, event_type, platform_game_id, tournament_type):
     """
     
     try:
-        cursor.execute(query, (
-            platform_game_id,
-            event_type,
-            tournament_type
-        ))
+        cursor.execute(query, (platform_game_id, event_type, tournament_type))
         event_id = cursor.fetchone()[0]
         connection.commit()
         print(f"Inserted event '{event_type}' for platform_game_id {platform_game_id}. Event ID: {event_id}")
     except Exception as e:
         connection.rollback()
         print(f"Error inserting event '{event_type}' for platform_game_id {platform_game_id}: {e}")
-        logging.error(f"Error inserting event '{event_type}' for platform_game_id {platform_game_id}: {e}")
+        # logging.error(f"Error inserting event '{event_type}' for platform_game_id {platform_game_id}: {e}")
         return None
     finally:
         cursor.close()
@@ -78,8 +75,6 @@ def insert_event(connection, event_type, platform_game_id, tournament_type):
 def insert_event_players(connection, event_id, event_data, event_type):
     """
     Inserts player-related data into the 'event_players' table for the given event.
-    Handles various event types such as 'player_died', 'spike_status', 'damage_event', 'player_revived', and 'ability_used'.
-    Logs an error and rolls back the transaction if any player insertion fails.
     """
     cursor = connection.cursor()
 
@@ -165,26 +160,24 @@ def insert_event_players(connection, event_id, event_data, event_type):
     except Exception as e:
         connection.rollback()
         print(f"Error inserting event_players data for event ID {event_id}: {e}")
-        logging.error(f"Error inserting event_players data for event ID {event_id}: {e}")
+        # logging.error(f"Error inserting event_players data for event ID {event_id}: {e}")
     finally:
         cursor.close()
 
 def populate_events(tournament_type, year):
     """
     Populates the 'events' and 'event_players' tables by processing game files from a given tournament and year.
-    Streams events from each game file (due to the large size of the json files) and inserts them into the database.
-    Logs errors if directories or files are not found, or if data insertion fails.
     """
     connection = create_connection()
     if connection is None:
         print("Could not connect to the database.")
         return
 
-    games_dir = f"../data/{tournament_type}/games/{year}/"
-    
+    games_dir = os.path.join(BASE_DATA_DIR, tournament_type, 'games', year)
+
     if not os.path.exists(games_dir):
         print(f"No games directory found for {tournament_type} in year {year}.")
-        logging.error(f"No games directory found for {tournament_type} in year {year}.")
+        # logging.error(f"No games directory found for {tournament_type} in year {year}.")
         return
 
     # Process each game file in the directory
@@ -192,7 +185,7 @@ def populate_events(tournament_type, year):
         if game_file.endswith(".json"):
             file_path = os.path.join(games_dir, game_file)
             print(f"Processing file: {file_path}")
-            
+
             # Stream events from JSON
             for event in stream_events_from_json(file_path):
                 platform_game_id = event.get("platformGameId")
@@ -214,7 +207,7 @@ def populate_events(tournament_type, year):
 
                 # Insert the event into the events table
                 event_id = insert_event(connection, event_type, platform_game_id, tournament_type)
-                
+
                 # Insert player-specific data into the event_players table
                 if event_id:
                     insert_event_players(connection, event_id, event, event_type)
@@ -225,24 +218,22 @@ if __name__ == "__main__":
     """
     Main script entry point.
     Prompts user for tournament type and year, and processes events for the selected tournament.
-    Logs errors for invalid inputs or selections.
-    This script will only fetch 'important', user-centric events that will help determine a player's impact
     """
     print("Available tournaments:")
     print("1: vct-international")
     print("2: vct-challengers")
     print("3: game-changers")
-    
+
     tournament_choice = input("Select the tournament by number: ").strip()
-    
+
     tournament_map = {
         "1": "vct-international",
         "2": "vct-challengers",
         "3": "game-changers"
     }
-    
+
     tournament_type = tournament_map.get(tournament_choice)
-    
+
     if tournament_type:
         year = input("Enter the year of the tournament: ").strip()
 
@@ -250,7 +241,7 @@ if __name__ == "__main__":
             populate_events(tournament_type, year)
         else:
             print("Invalid year input.")
-            logging.error(f"Invalid year input: {year}")
+            # logging.error(f"Invalid year input: {year}")
     else:
         print("Invalid selection.")
-        logging.error(f"Invalid tournament selection: {tournament_choice}")
+        # logging.error(f"Invalid tournament selection: {tournament_choice}")

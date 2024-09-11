@@ -1,11 +1,15 @@
-import json
 import os
+import json
 import psycopg2
-from psycopg2 import sql
 from datetime import datetime
+from dotenv import load_dotenv
 
-# Database connection string for local PostgreSQL
-DATABASE_URL = "postgresql://postgres:password@localhost:5432/vct-manager"
+# Load environment variables from .env file
+load_dotenv('/home/colin/vct-esports-manager/.env')
+
+# Read database URL from environment
+DATABASE_URL = os.getenv("DATABASE_URL")
+BASE_DATA_DIR = os.getenv("BASE_DATA_DIR")
 
 def create_connection():
     """
@@ -18,6 +22,24 @@ def create_connection():
     except Exception as e:
         print(f"Error connecting to database: {e}")
         return None
+
+def execute_schema(connection, schema_file):
+    """
+    Executes the SQL schema commands to create tables if they do not already exist.
+    """
+    with open(schema_file, 'r') as file:
+        schema_sql = file.read()
+    
+    cursor = connection.cursor()
+    try:
+        cursor.execute(schema_sql)
+        connection.commit()
+        print("Schema successfully executed.")
+    except Exception as e:
+        connection.rollback()
+        print(f"Error executing schema: {e}")
+    finally:
+        cursor.close()
 
 def load_json_data(filepath):
     """
@@ -43,7 +65,7 @@ def record_exists(connection, table, id_column, id_value):
 def insert_player_data(connection, data, tournament_type):
     """
     Inserts or updates player data in the 'players' table based on the 'created_at' field.
-    Updates if the new data has a more recent 'created_at' value for the same player (same player_id)
+    Updates if the new data has a more recent 'created_at' value for the same player.
     """
     cursor = connection.cursor()
 
@@ -195,7 +217,7 @@ def populate_table(table, tournament, year):
     if connection is None:
         return
 
-    filepath = f"../data/{tournament}/esports-data/{table}.json"
+    filepath = os.path.join(BASE_DATA_DIR, tournament, 'esports-data', f"{table}.json")
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
         return
@@ -271,6 +293,14 @@ if __name__ == "__main__":
     data_type = input("\nEnter the number corresponding to the data type you want to populate: ").strip()
     if data_type in data_type_map:
         table = data_type_map[data_type]
+
+        # Establish connection and execute schema commands
+        connection = create_connection()
+        if connection is not None:
+            execute_schema(connection, '../db/schema.sql')
+            connection.close()
+
+        # Populate the selected table
         populate_table(table, tournament, year)
     else:
         print("Invalid choice.")

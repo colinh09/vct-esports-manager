@@ -1,0 +1,2 @@
+2024-09-11 13:13:24,591 - ERROR - Error executing query 'get_all_players': Query 'get_all_players' not found.
+2024-09-11 13:17:28,301 - ERROR - Error executing query 'get_player_stats': 'tuple' object has no attribute 'format'
