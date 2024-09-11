@@ -38,16 +38,3 @@ def execute_query(query_func, **kwargs):
         print(f"Error executing query '{query_func.__name__}': {e}")
         return None
 
-# if __name__ == "__main__":
-#     # Example: Get player stats for a specific player in a tournament
-#     player_id = "107723774839335242"
-#     tournament_type = "vct-international"
-
-#     # Execute the predefined query function
-#     result = execute_query(get_player_stats, player_id=player_id, tournament_type=tournament_type)
-    
-#     # Print the result
-#     if result:
-#         print(result)
-#     else:
-#         print(f"Failed to execute query 'get_player_stats'")
