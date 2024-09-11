@@ -4,10 +4,8 @@ import psycopg2
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv('/home/colin/vct-esports-manager/.env')
+load_dotenv()
 
-# Read database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 BASE_DATA_DIR = os.getenv("BASE_DATA_DIR")
 

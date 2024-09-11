@@ -1,107 +1,137 @@
+import requests
 import json
+import gzip
+import shutil
+import time
 import os
-from supabase import create_client, Client
-from dotenv import load_dotenv
+from io import BytesIO
 
-# Load environment variables from ../.env
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
+# Base URL for the S3 bucket
+S3_BUCKET_URL = "https://vcthackathon-data.s3.us-west-2.amazonaws.com"
 
-# Retrieve Supabase credentials from the environment
-url = os.getenv("SUPA_URL")
-api_key = os.getenv("SUPA_API_KEY")
-
-# Initialize the Supabase client
-supabase: Client = create_client(url, api_key)
-
-# Helper function to load JSON data
-def load_json_data(filepath):
-    with open(filepath, 'r') as file:
-        data = json.load(file)
-    return data
-
-# Function to rename 'id' field based on the table being populated
-def rename_id_field(data, table):
-    id_field_mapping = {
-        'players': 'player_id',
-        'teams': 'team_id',
-        'tournaments': 'tournament_id',
-    }
-    
-    if table in id_field_mapping:
-        id_field = id_field_mapping[table]
-        for item in data:
-            if 'id' in item and id_field not in item:
-                item[id_field] = item.pop('id')
-    return data
-
-# Function to insert or update data for players/teams with composite keys
-def upsert_data_with_composite_key(table, data, tournament_type):
-    for item in data:
-        if table == 'players':
-            item['tournament_type'] = tournament_type
-            primary_keys = {
-                'player_id': item['player_id'],
-                'tournament_type': tournament_type,
-                'home_team_id': item['home_team_id']
-            }
-        elif table == 'teams':
-            item['tournament_type'] = tournament_type
-            primary_keys = {
-                'team_id': item['team_id'],
-                'tournament_type': tournament_type,
-                'home_league_id': item['home_league_id']
-            }
-        else:
-            # Add handling for other tables like 'tournaments', etc.
-            continue
-        
-        # Perform the upsert using the correct composite keys
-        response = supabase.table(table).upsert(item, on_conflict=list(primary_keys.keys())).execute()
-        
-        if response.status_code != 201:
-            print(f"Error upserting data into {table}: {response}")
-        else:
-            print(f"Successfully upserted data into {table}")
-
-# Main function to handle table population
-def populate_table(table, tournament):
-    filepath = f"../data/{tournament}/esports-data/{table}.json"
-    if not os.path.exists(filepath):
-        print(f"File not found: {filepath}")
+def download_gzip_and_write_to_json(file_name, full_url):
+    if os.path.isfile(f"{file_name}.json"):
+        print(f"{file_name}.json already exists, skipping download.")
         return
+
+    response = requests.get(full_url)
+    if response.status_code == 200:
+        try:
+            gzip_bytes = BytesIO(response.content)
+            with gzip.GzipFile(fileobj=gzip_bytes, mode="rb") as gzipped_file:
+                with open(f"{file_name}.json", 'wb') as output_file:
+                    shutil.copyfileobj(gzipped_file, output_file)
+                print(f"{file_name}.json written")
+        except Exception as e:
+            print("Error:", e)
+    else:
+        print(response)
+        print(f"Failed to download {file_name}")
+
+def download_esports_files(tournament, specific_files=None):
+    directory = f"../data/{tournament}/esports-data"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    esports_data_files = ["leagues", "tournaments", "players", "teams", "mapping_data"]
+
+    if specific_files:
+        files_to_download = [file for file in esports_data_files if file in specific_files]
+    else:
+        files_to_download = esports_data_files
+
+    for file_name in files_to_download:
+        file_path = f"{directory}/{file_name}"
+        full_url = f"{S3_BUCKET_URL}/{tournament}/esports-data/{file_name}.json.gz"
+        download_gzip_and_write_to_json(file_path, full_url)
+
+def download_games(tournament, year, specific_game_id=None):
+    start_time = time.time()
+    mapping_file = f"../data/{tournament}/esports-data/mapping_data.json"
     
-    data = load_json_data(filepath)
-    data = rename_id_field(data, table)
-    upsert_data_with_composite_key(table, data, tournament)
+    if not os.path.isfile(mapping_file):
+        print(f"Mapping file not found: {mapping_file}")
+        return
+
+    with open(mapping_file, "r") as json_file:
+        mappings_data = json.load(json_file)
+
+    directory = f"../data/{tournament}/games/{year}"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    game_counter = 0
+
+    if specific_game_id:
+        full_url = f"{S3_BUCKET_URL}/{tournament}/games/{year}/{specific_game_id}.json.gz"
+        download_gzip_and_write_to_json(f"{directory}/{specific_game_id}", full_url)
+    else:
+        for esports_game in mappings_data:
+            platform_game_id = esports_game["platformGameId"]
+            full_url = f"{S3_BUCKET_URL}/{tournament}/games/{year}/{platform_game_id}.json.gz"
+            download_gzip_and_write_to_json(f"{directory}/{platform_game_id}", full_url)
+            game_counter += 1
+            if game_counter % 10 == 0:
+                print(f"----- Processed {game_counter} games, current run time: {round((time.time() - start_time)/60, 2)} minutes")
+
+def download_fandom_data(file_choice):
+    directory = f"../data/fandom"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file_name = file_choice
+    file_path = f"{directory}/{file_name}"
+    full_url = f"{S3_BUCKET_URL}/fandom/{file_name}.xml.gz"
+    download_gzip_and_write_to_json(file_path, full_url)
 
 if __name__ == "__main__":
-    # Prompt for the tournament name
-    print("Available tournaments:")
-    print("1: vct-international")
-    print("2: vct-challengers")
-    print("3: game-changers")
+    # User input for selecting type of data
+    print("Select data type to download:")
+    print("1: Esports Data (tournaments, players, teams, etc.)")
+    print("2: Games Data")
+    print("3: Fandom Data")
+
+    choice = input("\nEnter the number corresponding to your choice: ")
+
+    if choice == '1':
+        print("\nAvailable tournaments:")
+        print("vct-international, vct-challengers, game-changers")
+        tournament = input("\nEnter tournament name (e.g., vct-international, vct-challengers, game-changers): ")
+        
+        print("\nAvailable esports data files:")
+        print("leagues, tournaments, players, teams, mapping_data")
+        specific_files_input = input("\nEnter the specific esports data files you want to download (comma-separated), or type 'all' to download everything: ")
+        
+        if specific_files_input.lower() == 'all':
+            download_esports_files(tournament)
+        else:
+            specific_files = [file.strip() for file in specific_files_input.split(',')]
+            download_esports_files(tournament, specific_files)
     
-    tournament = input("\nEnter the tournament name (vct-international, vct-challengers, game-changers): ").strip()
+    elif choice == '2':
+        print("\nAvailable tournaments:")
+        print("vct-international, vct-challengers, game-changers")
+        tournament = input("\nEnter tournament name (e.g., vct-international, vct-challengers, game-changers): ")
+        
+        year = input("\nEnter the year (2022, 2023, 2024): ")
+        
+        specific_game_id = input("\nEnter a specific game ID to download or press Enter to download all games: ")
+        
+        if specific_game_id:
+            download_games(tournament, year, specific_game_id)
+        else:
+            download_games(tournament, year)
     
-    # Prompt for the data type
-    print("\nAvailable data types to populate:")
-    print("1: Leagues")
-    print("2: Tournaments")
-    print("3: Players")
-    print("4: Teams")
-    print("5: Mapping")
+    elif choice == '3':
+        print("\nAvailable fandom data files:")
+        print("valorant_esports_pages, valorant_pages")
+        
+        file_choice = input("\nEnter the file you want to download: ")
+        
+        if file_choice in ['valorant_esports_pages', 'valorant_pages']:
+            download_fandom_data(file_choice)
+        else:
+            print("\nInvalid file choice.")
     
-    data_type_map = {
-        '1': 'leagues',
-        '2': 'tournaments',
-        '3': 'players',
-        '4': 'teams',
-        '5': 'mapping'
-    }
-    
-    data_type = input("\nEnter the number corresponding to the data type you want to populate: ").strip()
-    if data_type in data_type_map:
-        table = data_type_map[data_type]
-        populate_table(table, tournament)
     else:
-        print("Invalid choice.")
+        print("\nInvalid choice. Exiting.")

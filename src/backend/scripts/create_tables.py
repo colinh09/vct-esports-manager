@@ -1,8 +1,10 @@
 import psycopg2
 import os
 from psycopg2 import sql
+from dotenv import load_dotenv
 
-DATABASE_URL = "postgresql://postgres:password@localhost:5432/vct-manager"
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def create_connection():
     """
