@@ -4,7 +4,7 @@ from langchain_aws import ChatBedrock
 from langchain.chains.sql_database.query import create_sql_query_chain
 from langchain_community.utilities import SQLDatabase
 from langchain_core.prompts import PromptTemplate
-from sqlalchemy import text  # Import the `text` function
+from sqlalchemy import text 
 import re
 
 # Load environment variables
