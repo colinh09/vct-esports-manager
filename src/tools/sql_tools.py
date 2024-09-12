@@ -16,7 +16,3 @@ fetch_player_info_by_name_tool = StructuredTool.from_function(
 )
 
 tools = [fetch_player_info_by_handle_tool, fetch_player_info_by_name_tool]
-
-# Optional: Close the database connection when you're done using the instance
-# def close_player_info_connection():
-#     player_info_instance.close()
