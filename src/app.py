@@ -17,7 +17,7 @@ bedrock_agent = ChatBedrock(
 )
 
 openai_agent = ChatOpenAI(
-    model="gpt-3.5-turbo-0125",
+    model="gpt-4",
     api_key=API_KEY,
     temperature=0
 )

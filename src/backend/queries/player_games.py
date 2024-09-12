@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class PlayerGameStatsQueries:
-    def __init__(self, db_connection):
+    def __init__(self):
         # Get the DATABASE_URL from the environment
         self.db_url = os.getenv("DATABASE_URL")
         

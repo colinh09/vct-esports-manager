@@ -38,7 +38,6 @@ class PlayerInfoQueries:
         return player_info
 
     def get_player_info_by_handle(self, handle):
-        print("Tool Called by handle")
         """
         Fetches player information based on the player's handle, including team and league details.
         
@@ -47,7 +46,7 @@ class PlayerInfoQueries:
         """
         query = """
         SELECT
-            p.handle, p.first_name, p.last_name, p.status,
+            p.player_id, p.handle, p.first_name, p.last_name, p.status,
             t.name AS team_name, t.acronym AS team_acronym, t.slug AS team_slug, t.dark_logo_url, t.light_logo_url,
             l.name AS league_name, l.region AS league_region
         FROM players p
@@ -63,7 +62,6 @@ class PlayerInfoQueries:
         return player_info
 
     def get_player_info_by_name(self, first_name, last_name):
-        print("Tool called by name")
         """
         Fetches player information based on the player's first and last name, including team and league details.
         
