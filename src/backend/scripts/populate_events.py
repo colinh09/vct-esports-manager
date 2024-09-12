@@ -1,6 +1,7 @@
 import os
 import ijson
 import psycopg2
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,12 +9,12 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 BASE_DATA_DIR = os.getenv("BASE_DATA_DIR")
 
-# Commenting out error logging configuration
-# logging.basicConfig(
-#     filename="errorlogs.txt",
-#     level=logging.ERROR,
-#     format="%(asctime)s - %(levelname)s - %(message)s"
-# )
+# Error logging configuration
+logging.basicConfig(
+    filename="errorlogs_events.txt",
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 def create_connection():
     """
@@ -25,7 +26,7 @@ def create_connection():
         return connection
     except Exception as e:
         print(f"Error connecting to database: {e}")
-        # logging.error(f"Error connecting to database: {e}")
+        logging.error(f"Error connecting to database: {e}")
         return None
 
 def stream_events_from_json(filepath):
@@ -40,131 +41,190 @@ def stream_events_from_json(filepath):
                 yield event
     except Exception as e:
         print(f"Error streaming JSON data from file {filepath}: {e}")
-        # logging.error(f"Error streaming JSON data from file {filepath}: {e}")
+        logging.error(f"Error streaming JSON data from file {filepath}: {e}")
 
-def insert_event(connection, event_type, platform_game_id, tournament_type):
+def insert_player_died(connection, event_data):
     """
-    Inserts a new event into the 'events' table.
-    Returns the event ID of the inserted event.
+    Inserts a player died event and related assists into the database.
     """
     cursor = connection.cursor()
-
-    query = """
-        INSERT INTO events (platform_game_id, event_type, tournament_type)
-        VALUES (%s, %s, %s)
-        RETURNING event_id;
-    """
     
     try:
-        cursor.execute(query, (platform_game_id, event_type, tournament_type))
+        # Extract fields from event_data
+        platform_game_id = event_data["platformGameId"]
+        deceased_id = event_data["playerDied"]["deceasedId"]["value"]
+        killer_id = event_data["playerDied"]["killerId"]["value"]
+        
+        # If weapon data isn't available, assign None - this happens a lot, but doesn't really matter!
+        weapon_guid = event_data["playerDied"].get("weapon", {}).get("fallback", {}).get("guid", None)
+
+        # Insert player died event
+        cursor.execute("""
+            INSERT INTO player_died (platform_game_id, deceased_id, killer_id, weapon_guid)
+            VALUES (%s, %s, %s, %s)
+            RETURNING event_id;
+        """, (platform_game_id, deceased_id, killer_id, weapon_guid))
+        
         event_id = cursor.fetchone()[0]
+        print(f"Inserted player died event. Event ID: {event_id}")
+
+        # Insert assists if any
+        assistants = event_data["playerDied"].get("assistants", [])
+        for assistant in assistants:
+            assister_id = assistant["assistantId"]["value"]
+            cursor.execute("""
+                INSERT INTO player_assists (platform_game_id, assister_id)
+                VALUES (%s, %s);
+            """, (platform_game_id, assister_id))
+            print(f"Inserted assist by player {assister_id} for event ID {event_id}")
+
         connection.commit()
-        print(f"Inserted event '{event_type}' for platform_game_id {platform_game_id}. Event ID: {event_id}")
+        return event_id
+
+    except KeyError as e:
+        # Skip the event and log error if any other required field is missing
+        print(f"Skipping player died event due to missing field: {e}")
+        logging.error(f"Skipping player died event due to missing field: {e}")
     except Exception as e:
         connection.rollback()
-        print(f"Error inserting event '{event_type}' for platform_game_id {platform_game_id}: {e}")
-        # logging.error(f"Error inserting event '{event_type}' for platform_game_id {platform_game_id}: {e}")
-        return None
+        print(f"Error inserting player died event: {e}")
+        logging.error(f"Error inserting player died event: {e}")
     finally:
         cursor.close()
 
-    return event_id
-
-def insert_event_players(connection, event_id, event_data, event_type):
+def insert_spike_status(connection, event_data):
     """
-    Inserts player-related data into the 'event_players' table for the given event.
+    Inserts a spike status event into the database. Doesn't log errors for missing fields.
     """
     cursor = connection.cursor()
-
-    platform_game_id = event_data.get("platformGameId")
-
+    
     try:
-        if event_type == "player_died":
-            deceased_id = event_data["playerDied"]["deceasedId"]["value"]
-            killer_id = event_data["playerDied"]["killerId"]["value"]
-            assistants = event_data["playerDied"].get("assistants", [])
+        # Extract fields from event_data
+        platform_game_id = event_data["platformGameId"]
+        carrier_id = event_data["spikeStatus"]["carrier"]["value"]
+        status = event_data["spikeStatus"]["status"]
 
-            cursor.execute("""
-                INSERT INTO event_players (event_id, internal_player_id, platform_game_id, death_id)
-                VALUES (%s, %s, %s, %s);
-            """, (event_id, deceased_id, platform_game_id, deceased_id))
-            print(f"Inserted deceased player for event ID {event_id}")
-
-            cursor.execute("""
-                INSERT INTO event_players (event_id, internal_player_id, platform_game_id, kill_id)
-                VALUES (%s, %s, %s, %s);
-            """, (event_id, killer_id, platform_game_id, killer_id))
-            print(f"Inserted killer player for event ID {event_id}")
-
-            for assistant in assistants:
-                assistant_id = assistant["assistantId"]["value"]
-                cursor.execute("""
-                    INSERT INTO event_players (event_id, internal_player_id, platform_game_id, assist_id)
-                    VALUES (%s, %s, %s, %s);
-                """, (event_id, assistant_id, platform_game_id, assistant_id))
-                print(f"Inserted assistant player for event ID {event_id}")
-
-        elif event_type == "spike_status":
-            spike_carrier = event_data["spikeStatus"]["carrier"]["value"]
-            spike_status = event_data["spikeStatus"]["status"]
-
-            cursor.execute("""
-                INSERT INTO event_players (event_id, internal_player_id, platform_game_id, spike_status)
-                VALUES (%s, %s, %s, %s);
-            """, (event_id, spike_carrier, platform_game_id, spike_status))
-            print(f"Inserted spike carrier for event ID {event_id}")
-
-        elif event_type == "damage_event":
-            causer_id = event_data["damageEvent"]["causerId"]["value"]
-            victim_id = event_data["damageEvent"]["victimId"]["value"]
-            damage_amount = event_data["damageEvent"]["damageAmount"]
-            damage_location = event_data["damageEvent"]["location"]
-
-            cursor.execute("""
-                INSERT INTO event_players (event_id, internal_player_id, platform_game_id, damage_dealt, damage_location)
-                VALUES (%s, %s, %s, %s, %s);
-            """, (event_id, causer_id, platform_game_id, damage_amount, damage_location))
-            print(f"Inserted damage event for causer {causer_id} in event ID {event_id}")
-
-            if event_data["damageEvent"].get("killEvent"):
-                cursor.execute("""
-                    INSERT INTO event_players (event_id, internal_player_id, platform_game_id, death_id)
-                    VALUES (%s, %s, %s, %s);
-                """, (event_id, victim_id, platform_game_id, victim_id))
-                print(f"Inserted death event for victim {victim_id} in event ID {event_id}")
-
-        elif event_type == "player_revived":
-            revived_by_id = event_data["playerRevived"]["revivedById"]["value"]
-            revived_id = event_data["playerRevived"]["revivedId"]["value"]
-
-            cursor.execute("""
-                INSERT INTO event_players (event_id, internal_player_id, platform_game_id, revived_by_id, revived_player_id)
-                VALUES (%s, %s, %s, %s, %s);
-            """, (event_id, revived_by_id, platform_game_id, revived_by_id, revived_id))
-            print(f"Inserted player revived event for revived ID {revived_id} in event ID {event_id}")
-
-        elif event_type == "ability_used":
-            player_id = event_data["abilityUsed"]["playerId"]["value"]
-            ability_guid = event_data["abilityUsed"]["ability"]["fallback"]["guid"]
-
-            cursor.execute("""
-                INSERT INTO event_players (event_id, internal_player_id, platform_game_id, ability_used)
-                VALUES (%s, %s, %s, %s);
-            """, (event_id, player_id, platform_game_id, ability_guid))
-            print(f"Inserted ability used event for player {player_id} in event ID {event_id}")
-
+        cursor.execute("""
+            INSERT INTO spike_status (platform_game_id, carrier_id, status)
+            VALUES (%s, %s, %s);
+        """, (platform_game_id, carrier_id, status))
+        
         connection.commit()
+        # Dont log any errors here - there are a lot of situations when the spike has no carrier
+        # If no carrer - not relevant to us at all!
+        print(f"Inserted spike status event for carrier {carrier_id}")
 
+    except KeyError:
+        # Silently skip spike status events with missing fields, no logging needed
+        print(f"Skipping spike status event due to missing data.")
     except Exception as e:
         connection.rollback()
-        print(f"Error inserting event_players data for event ID {event_id}: {e}")
-        # logging.error(f"Error inserting event_players data for event ID {event_id}: {e}")
+        print(f"Error inserting spike status event: {e}")
+        logging.error(f"Error inserting spike status event: {e}")
+    finally:
+        cursor.close()
+
+def insert_damage_event(connection, event_data):
+    """
+    Inserts a damage event into the database.
+    """
+    cursor = connection.cursor()
+    
+    try:
+        # Extract fields from event_data
+        platform_game_id = event_data["platformGameId"]
+        causer_id = event_data["damageEvent"]["causerId"]["value"]
+        victim_id = event_data["damageEvent"]["victimId"]["value"]
+        location = event_data["damageEvent"]["location"]
+        damage_amount = event_data["damageEvent"]["damageAmount"]
+        kill_event = event_data["damageEvent"]["killEvent"]
+
+        cursor.execute("""
+            INSERT INTO damage_event (platform_game_id, causer_id, victim_id, location, damage_amount, kill_event)
+            VALUES (%s, %s, %s, %s, %s, %s);
+        """, (platform_game_id, causer_id, victim_id, location, damage_amount, kill_event))
+        
+        connection.commit()
+        print(f"Inserted damage event for causer {causer_id} and victim {victim_id}")
+
+    except KeyError as e:
+        # Skip the event and log error if any required field is missing
+        print(f"Skipping damage event due to missing field: {e}")
+        logging.error(f"Skipping damage event due to missing field: {e}")
+    except Exception as e:
+        connection.rollback()
+        print(f"Error inserting damage event: {e}")
+        logging.error(f"Error inserting damage event: {e}")
+    finally:
+        cursor.close()
+
+def insert_player_revived(connection, event_data):
+    """
+    Inserts a player revived event into the database.
+    """
+    cursor = connection.cursor()
+    
+    try:
+        # Extract fields from event_data
+        platform_game_id = event_data["platformGameId"]
+        revived_by_id = event_data["playerRevived"]["revivedById"]["value"]
+        revived_id = event_data["playerRevived"]["revivedId"]["value"]
+
+        cursor.execute("""
+            INSERT INTO player_revived (platform_game_id, revived_by_id, revived_id)
+            VALUES (%s, %s, %s);
+        """, (platform_game_id, revived_by_id, revived_id))
+        
+        connection.commit()
+        print(f"Inserted player revived event for revived player {revived_id}")
+
+    except KeyError as e:
+        # Skip the event and log error if any required field is missing
+        print(f"Skipping player revived event due to missing field: {e}")
+        logging.error(f"Skipping player revived event due to missing field: {e}")
+    except Exception as e:
+        connection.rollback()
+        print(f"Error inserting player revived event: {e}")
+        logging.error(f"Error inserting player revived event: {e}")
+    finally:
+        cursor.close()
+
+def insert_ability_used(connection, event_data):
+    """
+    Inserts an ability used event into the database.
+    """
+    cursor = connection.cursor()
+    
+    try:
+        # Extract fields from event_data
+        platform_game_id = event_data["platformGameId"]
+        player_id = event_data["abilityUsed"]["playerId"]["value"]
+        ability_guid = event_data["abilityUsed"]["ability"]["fallback"]["guid"]
+        inventory_slot = event_data["abilityUsed"]["ability"]["fallback"]["inventorySlot"]["slot"]
+        charges_consumed = event_data["abilityUsed"]["chargesConsumed"]
+
+        cursor.execute("""
+            INSERT INTO ability_used (platform_game_id, player_id, ability_guid, inventory_slot, charges_consumed)
+            VALUES (%s, %s, %s, %s, %s);
+        """, (platform_game_id, player_id, ability_guid, inventory_slot, charges_consumed))
+        
+        connection.commit()
+        print(f"Inserted ability used event for player {player_id}")
+
+    except KeyError as e:
+        # Skip the event and log error if any required field is missing
+        print(f"Skipping ability used event due to missing field: {e}")
+        logging.error(f"Skipping ability used event due to missing field: {e}")
+    except Exception as e:
+        connection.rollback()
+        print(f"Error inserting ability used event: {e}")
+        logging.error(f"Error inserting ability used event: {e}")
     finally:
         cursor.close()
 
 def populate_events(tournament_type, year):
     """
-    Populates the 'events' and 'event_players' tables by processing game files from a given tournament and year.
+    Populates the event-specific tables by processing game files from a given tournament and year.
     """
     connection = create_connection()
     if connection is None:
@@ -175,7 +235,7 @@ def populate_events(tournament_type, year):
 
     if not os.path.exists(games_dir):
         print(f"No games directory found for {tournament_type} in year {year}.")
-        # logging.error(f"No games directory found for {tournament_type} in year {year}.")
+        logging.error(f"No games directory found for {tournament_type} in year {year}.")
         return
 
     # Process each game file in the directory
@@ -190,25 +250,15 @@ def populate_events(tournament_type, year):
 
                 # Check for player-centric events
                 if "playerDied" in event:
-                    event_type = "player_died"
+                    insert_player_died(connection, event)
                 elif "spikeStatus" in event:
-                    event_type = "spike_status"
+                    insert_spike_status(connection, event)
                 elif "damageEvent" in event:
-                    event_type = "damage_event"
+                    insert_damage_event(connection, event)
                 elif "playerRevived" in event:
-                    event_type = "player_revived"
+                    insert_player_revived(connection, event)
                 elif "abilityUsed" in event:
-                    event_type = "ability_used"
-                else:
-                    # Skip events that aren't player-centric
-                    continue
-
-                # Insert the event into the events table
-                event_id = insert_event(connection, event_type, platform_game_id, tournament_type)
-
-                # Insert player-specific data into the event_players table
-                if event_id:
-                    insert_event_players(connection, event_id, event, event_type)
+                    insert_ability_used(connection, event)
 
     connection.close()
 
@@ -239,7 +289,7 @@ if __name__ == "__main__":
             populate_events(tournament_type, year)
         else:
             print("Invalid year input.")
-            # logging.error(f"Invalid year input: {year}")
+            logging.error(f"Invalid year input: {year}")
     else:
         print("Invalid selection.")
-        # logging.error(f"Invalid tournament selection: {tournament_choice}")
+        logging.error(f"Invalid tournament selection: {tournament_choice}")

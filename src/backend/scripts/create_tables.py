@@ -49,8 +49,10 @@ def drop_tables(connection, tables_to_drop):
         tables_to_drop: A comma-separated string of table names to drop.
     """
     valid_tables = {
-        'events', 'player_mapping', 'team_mapping', 'game_mapping', 
-        'players', 'teams', 'tournaments', 'leagues'
+        'player_mapping', 'team_mapping', 'game_mapping', 
+        'players', 'teams', 'tournaments', 'leagues',
+        'spike_status', 'ability_used', 'damage_event',
+        'player_assists', 'player_died', 'player_revived'
     }
 
     # Filter out invalid table names
@@ -64,152 +66,46 @@ def drop_tables(connection, tables_to_drop):
         drop_query = f"DROP TABLE IF EXISTS {table} CASCADE;"
         execute_query(connection, drop_query)
         print(f"Dropped table: {table}")
+    
+def read_sql_file(file_path):
+    """
+    Reads the SQL commands from the given file and returns them as a string.
+    
+    Args:
+        file_path: Path to the SQL file to read from.
+    
+    Returns:
+        A string containing all the SQL commands from the file.
+    """
+    with open(file_path, 'r') as file:
+        sql_commands = file.read()
+    return sql_commands
 
 def create_tables():
     """
     Creates necessary tables in the PostgreSQL database if they do not exist.
+    Reads the table creation SQL from an external file (schema.sql).
     Optionally, it allows the user to drop specified tables before recreating them.
-    Tables include leagues, tournaments, teams, players, game mapping, and various event-related tables.
     """
     connection = create_connection()
     if connection is None:
         return
 
-    # Optionally drop existing tables
     drop_choice = input("Do you want to drop existing tables before recreating them? (yes/no): ").strip().lower()
 
     if drop_choice == "yes":
         tables_to_drop = input("Specify which tables to drop (comma separated, e.g., players,teams): ").strip()
         drop_tables(connection, tables_to_drop)
 
-    # List of SQL queries to create the tables
-    queries = [
-        """
-        CREATE TABLE IF NOT EXISTS leagues (
-          league_id VARCHAR(255),
-          tournament_type VARCHAR(255),
-          region VARCHAR(10),
-          dark_logo_url TEXT,
-          light_logo_url TEXT,
-          name VARCHAR(255),
-          slug VARCHAR(255),
-          PRIMARY KEY (league_id, tournament_type)
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS tournaments (
-          tournament_id VARCHAR(255),
-          tournament_type VARCHAR(255),
-          status VARCHAR(50),
-          league_id VARCHAR(255),
-          time_zone VARCHAR(50),
-          name VARCHAR(255),
-          PRIMARY KEY (tournament_id, tournament_type),
-          FOREIGN KEY (league_id, tournament_type) REFERENCES leagues(league_id, tournament_type) ON DELETE CASCADE
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS teams (
-          team_id VARCHAR(255),
-          tournament_type VARCHAR(255),
-          acronym VARCHAR(10),
-          home_league_id VARCHAR(255),
-          dark_logo_url TEXT,
-          light_logo_url TEXT,
-          slug VARCHAR(255),
-          name VARCHAR(255),
-          PRIMARY KEY (team_id, tournament_type),
-          FOREIGN KEY (home_league_id, tournament_type) REFERENCES leagues(league_id, tournament_type) ON DELETE CASCADE,
-          UNIQUE (team_id, tournament_type)
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS players (
-        player_id VARCHAR(255),
-        tournament_type VARCHAR(255),
-        handle VARCHAR(255),
-        first_name VARCHAR(255),
-        last_name VARCHAR(255),
-        status VARCHAR(50),
-        photo_url TEXT,
-        home_team_id VARCHAR(255),
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP,
-        PRIMARY KEY (player_id, tournament_type)
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS game_mapping (
-          platform_game_id VARCHAR(255) PRIMARY KEY,
-          esports_game_id VARCHAR(255),
-          tournament_id VARCHAR(255),
-          tournament_type VARCHAR(255),
-          year INTEGER,
-          FOREIGN KEY (tournament_id, tournament_type) REFERENCES tournaments(tournament_id, tournament_type) ON DELETE CASCADE
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS player_mapping (
-          internal_player_id VARCHAR(255),
-          player_id VARCHAR(255),
-          tournament_type VARCHAR(255),
-          platform_game_id VARCHAR(255),
-          PRIMARY KEY (internal_player_id, platform_game_id),
-          FOREIGN KEY (player_id, tournament_type) REFERENCES players(player_id, tournament_type) ON DELETE CASCADE,
-          FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS team_mapping (
-          internal_team_id VARCHAR(255),
-          team_id VARCHAR(255),
-          tournament_type VARCHAR(255),
-          platform_game_id VARCHAR(255),
-          PRIMARY KEY (internal_team_id, platform_game_id),
-          FOREIGN KEY (team_id, tournament_type) REFERENCES teams(team_id, tournament_type) ON DELETE CASCADE,
-          FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS events (
-            event_id BIGSERIAL PRIMARY KEY,
-            platform_game_id VARCHAR(255),
-            event_type VARCHAR(255),
-            tournament_type VARCHAR(255),
-            FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS event_players (
-            event_player_id BIGSERIAL PRIMARY KEY,
-            event_id BIGINT,
-            internal_player_id VARCHAR(255),
-            platform_game_id VARCHAR(255),
-            
-            kill_id VARCHAR(255) DEFAULT NULL,
-            death_id VARCHAR(255) DEFAULT NULL,
-            assist_id VARCHAR(255) DEFAULT NULL,
-            
-            damage_dealt FLOAT DEFAULT NULL,
-            damage_location VARCHAR(50) DEFAULT NULL,
-            
-            spike_status VARCHAR(50) DEFAULT NULL,
-            weapon_used VARCHAR(255) DEFAULT NULL,
-            
-            ability_used VARCHAR(255) DEFAULT NULL,
-            
-            revived_by_id VARCHAR(255) DEFAULT NULL,
-            revived_player_id VARCHAR(255) DEFAULT NULL,
-            
-            FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE,
-            FOREIGN KEY (internal_player_id, platform_game_id) REFERENCES player_mapping(internal_player_id, platform_game_id) ON DELETE CASCADE
-        );
-        """
-    ]
+    schema_file_path = "backend/db/schema.sql"
 
-    # Execute each table creation query
-    for query in queries:
-        execute_query(connection, query)
+
+    sql_commands = read_sql_file(schema_file_path)
+
+    try:
+        execute_query(connection, sql_commands)
+    except Exception as e:
+        print(f"Error executing SQL commands from file: {e}")
 
     connection.close()
 
