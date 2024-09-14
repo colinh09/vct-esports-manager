@@ -9,6 +9,10 @@ __pycache__/
 # Don't push s3 bucket data to repo
 /data
 
+# Ignore error logs
+*errorlogs*
+
+
 # Distribution / packaging
 .Python
 build/

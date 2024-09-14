@@ -294,9 +294,9 @@ if __name__ == "__main__":
 
         # Establish connection and execute schema commands
         connection = create_connection()
-        if connection is not None:
-            execute_schema(connection, '../db/schema.sql')
-            connection.close()
+        # if connection is not None:
+        #     execute_schema(connection, '../db/schema.sql')
+        #     connection.close()
 
         # Populate the selected table
         populate_table(table, tournament, year)
