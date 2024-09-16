@@ -6,7 +6,6 @@ import requests
 import json
 import gzip
 import shutil
-import time
 from io import BytesIO
 from dotenv import load_dotenv
 
@@ -17,7 +16,7 @@ BASE_DATA_DIR = "/home/colin/vct-esports-manager/data"
 S3_BUCKET_URL = "https://vcthackathon-data.s3.us-west-2.amazonaws.com"
 
 logging.basicConfig(
-    filename="data_processor.log",
+    filename="single_game_processor.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -29,53 +28,15 @@ def create_connection():
         logging.error(f"Error connecting to database: {e}")
         return None
 
-def ensure_columns_exist(connection, reset=False):
-    cursor = connection.cursor()
-    try:
-        if reset:
-            cursor.execute("""
-                ALTER TABLE player_mapping
-                DROP COLUMN IF EXISTS kills,
-                DROP COLUMN IF EXISTS deaths,
-                DROP COLUMN IF EXISTS assists,
-                DROP COLUMN IF EXISTS combat_score,
-                DROP COLUMN IF EXISTS agent_guid;
-            """)
-            logging.info("Dropped existing stat columns.")
-
-        cursor.execute("""
-            ALTER TABLE player_mapping
-            ADD COLUMN IF NOT EXISTS kills INTEGER,
-            ADD COLUMN IF NOT EXISTS deaths INTEGER,
-            ADD COLUMN IF NOT EXISTS assists INTEGER,
-            ADD COLUMN IF NOT EXISTS combat_score INTEGER,
-            ADD COLUMN IF NOT EXISTS agent_guid TEXT;
-        """)
-        connection.commit()
-        logging.info("Ensured necessary columns exist in player_mapping table.")
-    except Exception as e:
-        connection.rollback()
-        logging.error(f"Error ensuring columns: {e}")
-    finally:
-        cursor.close()
-
 def download_and_process_game(tournament, year, platform_game_id, connection):
-    cursor = connection.cursor()
+    directory = f"{BASE_DATA_DIR}/{tournament}/games/{year}"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file_path = f"{directory}/{platform_game_id}.json"
+    full_url = f"{S3_BUCKET_URL}/{tournament}/games/{year}/{platform_game_id}.json.gz"
+
     try:
-        # Check if the platform_game_id exists in the game_mapping table
-        cursor.execute("SELECT 1 FROM game_mapping WHERE platform_game_id = %s", (platform_game_id,))
-        if cursor.fetchone() is None:
-            logging.info(f"Skipping game {platform_game_id}: Not present in game_mapping table")
-            return None
-
-        directory = f"{BASE_DATA_DIR}/{tournament}/games/{year}"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        file_path = f"{directory}/{platform_game_id}.json"
-        full_url = f"{S3_BUCKET_URL}/{tournament}/games/{year}/{platform_game_id}.json.gz"
-
-        # Download the file
         response = requests.get(full_url)
         if response.status_code == 200:
             gzip_bytes = BytesIO(response.content)
@@ -84,24 +45,23 @@ def download_and_process_game(tournament, year, platform_game_id, connection):
                     shutil.copyfileobj(gzipped_file, output_file)
             logging.info(f"Downloaded: {platform_game_id}.json")
 
-            # Process the file
             event_counts = process_json_file(file_path, connection)
-            logging.info(f"Processed: {platform_game_id}.json")
-            logging.info(f"Event counts: {event_counts}")
+            if event_counts is None:
+                logging.info(f"Skipped processing for game {platform_game_id} due to foreign key constraint.")
+            else:
+                logging.info(f"Processed: {platform_game_id}.json")
+                logging.info(f"Event counts: {event_counts}")
 
-            # Delete the file
             os.remove(file_path)
             logging.info(f"Deleted: {platform_game_id}.json")
 
             return event_counts
         else:
             logging.error(f"Failed to download {platform_game_id}.json")
-            return None
+            return {}
     except Exception as e:
         logging.error(f"Error processing game {platform_game_id}: {e}")
-        return None
-    finally:
-        cursor.close()
+        return {}
 
 def process_json_file(filepath, connection):
     try:
@@ -161,30 +121,6 @@ def process_json_file(filepath, connection):
     except Exception as e:
         logging.error(f"Error processing file {filepath}: {e}")
         return None
-
-def update_player_stats(connection, platform_game_id, player_stats):
-    cursor = connection.cursor()
-    try:
-        for player in player_stats:
-            internal_player_id = str(player['playerId']['value'])
-            kills = player.get('kills')
-            deaths = player.get('deaths')
-            assists = player.get('assists')
-            combat_score = player.get('scores', {}).get('combatScore', {}).get('totalScore')
-
-            cursor.execute("""
-                UPDATE player_mapping
-                SET kills = %s, deaths = %s, assists = %s, combat_score = %s
-                WHERE internal_player_id = %s AND platform_game_id = %s;
-            """, (kills, deaths, assists, combat_score, internal_player_id, platform_game_id))
-            
-        connection.commit()
-        logging.info("Updated player stats successfully")
-    except Exception as e:
-        connection.rollback()
-        logging.error(f"Error updating player stats: {e}")
-    finally:
-        cursor.close()
 
 def process_configuration_event(connection, event_data):
     cursor = connection.cursor()
@@ -320,49 +256,44 @@ def insert_ability_used(connection, event_data):
     finally:
         cursor.close()
 
-def populate_data(tournament_type, year, reset_columns, start_game=0):
+def update_player_stats(connection, platform_game_id, player_stats):
+    cursor = connection.cursor()
+    try:
+        for player in player_stats:
+            internal_player_id = str(player['playerId']['value'])
+            kills = player.get('kills')
+            deaths = player.get('deaths')
+            assists = player.get('assists')
+            combat_score = player.get('scores', {}).get('combatScore', {}).get('totalScore')
+
+            cursor.execute("""
+                UPDATE player_mapping
+                SET kills = %s, deaths = %s, assists = %s, combat_score = %s
+                WHERE internal_player_id = %s AND platform_game_id = %s;
+            """, (kills, deaths, assists, combat_score, internal_player_id, platform_game_id))
+            
+        connection.commit()
+        logging.info("Updated player stats successfully")
+    except Exception as e:
+        connection.rollback()
+        logging.error(f"Error updating player stats: {e}")
+    finally:
+        cursor.close()
+
+def process_single_game(tournament_type, year, platform_game_id):
     connection = create_connection()
     if connection is None:
         logging.error("Could not connect to the database.")
         return
 
-    ensure_columns_exist(connection, reset_columns)
-
-    mapping_file = f"{BASE_DATA_DIR}/{tournament_type}/esports-data/mapping_data.json"
+    logging.info(f"Processing game: {platform_game_id}")
+    event_counts = download_and_process_game(tournament_type, year, platform_game_id, connection)
     
-    if not os.path.isfile(mapping_file):
-        logging.error(f"Mapping file not found: {mapping_file}")
-        return
-
-    with open(mapping_file, "r") as json_file:
-        mappings_data = json.load(json_file)
-
-    total_event_counts = {
-        'configuration': 0,
-        'player_died': 0,
-        'spike_status': 0,
-        'damage_event': 0,
-        'player_revived': 0,
-        'ability_used': 0
-    }
-
-    for index, esports_game in enumerate(mappings_data[start_game:], start_game + 1):
-        platform_game_id = esports_game["platformGameId"]
-        logging.info(f"Processing game {index}/{len(mappings_data)}: {platform_game_id}")
-        
-        event_counts = download_and_process_game(tournament_type, year, platform_game_id, connection)
-        
-        if event_counts is not None:
-            for event_type, count in event_counts.items():
-                total_event_counts[event_type] += count
-
-        if index % 10 == 0:
-            logging.info(f"----- Processed {index} games")
-            logging.info(f"Current total event counts: {total_event_counts}")
-
-    logging.info("Data processing complete. Total event counts:")
-    for event_type, count in total_event_counts.items():
-        logging.info(f"{event_type}: {count}")
+    if event_counts is not None:
+        logging.info(f"Successfully processed game {platform_game_id}")
+        logging.info(f"Event counts: {event_counts}")
+    else:
+        logging.error(f"Failed to process game {platform_game_id}")
 
     connection.close()
 
@@ -384,14 +315,12 @@ if __name__ == "__main__":
 
     if tournament_type:
         year = input("Enter the year of the tournament: ").strip()
-        reset_option = input("Do you want to reset the stat columns? (y/n): ").strip().lower()
-        reset_columns = reset_option == 'y'
-        start_game = int(input("Enter the game number to start from (0 to start from beginning): ").strip())
+        platform_game_id = input("Enter the platform game ID to process: ").strip()
 
         if year.isdigit():
-            logging.info(f"Starting data population for {tournament_type} {year} from game {start_game}")
-            populate_data(tournament_type, year, reset_columns, start_game)
-            logging.info(f"Completed data population for {tournament_type} {year}")
+            logging.info(f"Starting processing for game {platform_game_id} in {tournament_type} {year}")
+            process_single_game(tournament_type, year, platform_game_id)
+            logging.info(f"Completed processing for game {platform_game_id}")
         else:
             print("Invalid year input.")
             logging.error(f"Invalid year input: {year}")
