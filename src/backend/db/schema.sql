@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
   league_id VARCHAR(255),
   time_zone VARCHAR(50),
   name VARCHAR(255),
+  year INTEGER,
   PRIMARY KEY (tournament_id, tournament_type),
   FOREIGN KEY (league_id, tournament_type) REFERENCES leagues(league_id, tournament_type) ON DELETE CASCADE
 );
@@ -58,7 +59,6 @@ CREATE TABLE IF NOT EXISTS game_mapping (
   esports_game_id VARCHAR(255),
   tournament_id VARCHAR(255),
   tournament_type VARCHAR(255),
-  year INTEGER,
   FOREIGN KEY (tournament_id, tournament_type) REFERENCES tournaments(tournament_id, tournament_type) ON DELETE CASCADE
 );
 
@@ -68,6 +68,11 @@ CREATE TABLE IF NOT EXISTS player_mapping (
   player_id VARCHAR(255),
   tournament_type VARCHAR(255),
   platform_game_id VARCHAR(255),
+  agent_guid VARCHAR(255),
+  kills INTEGER,
+  deaths INTEGER,
+  assists INTEGER,
+  combat_score INTEGER,
   PRIMARY KEY (internal_player_id, platform_game_id),
   FOREIGN KEY (player_id, tournament_type) REFERENCES players(player_id, tournament_type) ON DELETE CASCADE,
   FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
@@ -84,37 +89,61 @@ CREATE TABLE IF NOT EXISTS team_mapping (
   FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
 );
 
--- Create Events Table
-CREATE TABLE IF NOT EXISTS events (
+-- Create Player Died Table
+CREATE TABLE IF NOT EXISTS player_died (
   event_id BIGSERIAL PRIMARY KEY,
   platform_game_id VARCHAR(255),
-  event_type VARCHAR(255),
-  tournament_type VARCHAR(255),
+  deceased_id VARCHAR(255),
+  killer_id VARCHAR(255),
+  weapon_guid VARCHAR(255),
   FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
 );
 
--- Create Event Players Table
-CREATE TABLE IF NOT EXISTS event_players (
-  event_player_id BIGSERIAL PRIMARY KEY,
-  event_id BIGINT,
-  internal_player_id VARCHAR(255),
+-- Create Player Assists Table
+CREATE TABLE IF NOT EXISTS player_assists (
+  event_id BIGSERIAL PRIMARY KEY, 
   platform_game_id VARCHAR(255),
-  
-  kill_id VARCHAR(255) DEFAULT NULL,
-  death_id VARCHAR(255) DEFAULT NULL,
-  assist_id VARCHAR(255) DEFAULT NULL,
-  
-  damage_dealt FLOAT DEFAULT NULL,
-  damage_location VARCHAR(50) DEFAULT NULL,
-  
-  spike_status VARCHAR(50) DEFAULT NULL,
-  weapon_used VARCHAR(255) DEFAULT NULL,
-  
-  ability_used VARCHAR(255) DEFAULT NULL,
-  
-  revived_by_id VARCHAR(255) DEFAULT NULL,
-  revived_player_id VARCHAR(255) DEFAULT NULL,
-  
-  FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE,
-  FOREIGN KEY (internal_player_id, platform_game_id) REFERENCES player_mapping(internal_player_id, platform_game_id) ON DELETE CASCADE
+  assister_id VARCHAR(255),
+  FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
+);
+
+-- Create Spike Status Table
+CREATE TABLE IF NOT EXISTS spike_status (
+  event_id BIGSERIAL PRIMARY KEY,
+  platform_game_id VARCHAR(255),
+  carrier_id VARCHAR(255),
+  status VARCHAR(50),
+  FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
+);
+
+-- Create Damage Event Table
+CREATE TABLE IF NOT EXISTS damage_event (
+  event_id BIGSERIAL PRIMARY KEY,
+  platform_game_id VARCHAR(255),
+  causer_id VARCHAR(255),
+  victim_id VARCHAR(255),
+  location VARCHAR(50),
+  damage_amount FLOAT,
+  kill_event BOOLEAN,
+  FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
+);
+
+-- Create Player Revived Table
+CREATE TABLE IF NOT EXISTS player_revived (
+  event_id BIGSERIAL PRIMARY KEY,
+  platform_game_id VARCHAR(255),
+  revived_by_id VARCHAR(255),
+  revived_id VARCHAR(255),
+  FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
+);
+
+-- Create Ability Used Table
+CREATE TABLE IF NOT EXISTS ability_used (
+  event_id BIGSERIAL PRIMARY KEY,
+  platform_game_id VARCHAR(255),
+  player_id VARCHAR(255),
+  ability_guid VARCHAR(255),
+  inventory_slot VARCHAR(50),
+  charges_consumed INTEGER,
+  FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
 );

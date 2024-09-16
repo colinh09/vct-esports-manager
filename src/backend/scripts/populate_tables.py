@@ -2,6 +2,7 @@ import os
 import json
 import psycopg2
 from datetime import datetime
+import pytz
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -48,14 +49,15 @@ def load_json_data(filepath):
         data = json.load(file)
     return data
 
-def record_exists(connection, table, id_column, id_value):
+def record_exists(connection, table, id_columns, id_values):
     """
-    Checks if a record with a given ID exists in the specified table.
+    Checks if a record with given ID values exists in the specified table.
     Returns True if the record exists, otherwise False.
     """
     cursor = connection.cursor()
-    query = f"SELECT EXISTS (SELECT 1 FROM {table} WHERE {id_column} = %s)"
-    cursor.execute(query, (id_value,))
+    columns = ' AND '.join([f"{col} = %s" for col in id_columns])
+    query = f"SELECT EXISTS (SELECT 1 FROM {table} WHERE {columns})"
+    cursor.execute(query, id_values)
     exists = cursor.fetchone()[0]
     cursor.close()
     return exists
@@ -69,7 +71,7 @@ def insert_player_data(connection, data, tournament_type):
 
     for item in data:
         item['tournament_type'] = tournament_type
-        created_at = datetime.fromisoformat(item['created_at'].replace("Z", "+00:00"))
+        created_at = datetime.fromisoformat(item['created_at'].replace("Z", "+00:00")).replace(tzinfo=pytz.UTC)
 
         cursor.execute("""
             SELECT created_at
@@ -81,6 +83,9 @@ def insert_player_data(connection, data, tournament_type):
 
         if result:
             existing_created_at = result[0]
+            if existing_created_at.tzinfo is None:
+                existing_created_at = existing_created_at.replace(tzinfo=pytz.UTC)
+            
             if created_at > existing_created_at:
                 columns = ', '.join([f"{key} = %s" for key in item.keys()])
                 query = f"""
@@ -104,7 +109,7 @@ def insert_player_data(connection, data, tournament_type):
 
     cursor.close()
 
-def insert_mapping_data(connection, data, tournament_type, year):
+def insert_mapping_data(connection, data, tournament_type):
     """
     Inserts mapping data into 'game_mapping', 'player_mapping', and 'team_mapping' tables.
     Handles each mapping type separately, ensuring related records exist before insertion.
@@ -114,19 +119,18 @@ def insert_mapping_data(connection, data, tournament_type, year):
         esports_game_id = item.get('esportsGameId')
         tournament_id = item.get('tournamentId')
 
-        if not record_exists(connection, 'game_mapping', 'platform_game_id', platform_game_id):
+        if not record_exists(connection, 'game_mapping', ['platform_game_id'], [platform_game_id]):
             game_mapping_data = {
                 'platform_game_id': platform_game_id,
                 'esports_game_id': esports_game_id,
                 'tournament_id': tournament_id,
-                'tournament_type': tournament_type,
-                'year': year
+                'tournament_type': tournament_type
             }
             insert_data_to_db(connection, 'game_mapping', [game_mapping_data], tournament_type)
 
         player_mapping = item.get('participantMapping', {})
         for internal_player_id, player_id in player_mapping.items():
-            if not record_exists(connection, 'players', 'player_id', player_id):
+            if not record_exists(connection, 'players', ['player_id', 'tournament_type'], [player_id, tournament_type]):
                 print(f"Skipping player mapping for internal_player_id {internal_player_id} as player {player_id} does not exist.")
                 continue
 
@@ -134,13 +138,14 @@ def insert_mapping_data(connection, data, tournament_type, year):
                 'internal_player_id': internal_player_id,
                 'player_id': player_id,
                 'tournament_type': tournament_type,
-                'platform_game_id': platform_game_id
+                'platform_game_id': platform_game_id,
+                'agent_guid': ''  # Set to empty string as requested
             }
             insert_data_to_db(connection, 'player_mapping', [player_data], tournament_type)
 
         team_mapping = item.get('teamMapping', {})
         for internal_team_id, team_id in team_mapping.items():
-            if not record_exists(connection, 'teams', 'team_id', team_id):
+            if not record_exists(connection, 'teams', ['team_id', 'tournament_type'], [team_id, tournament_type]):
                 print(f"Skipping team mapping for internal_team_id {internal_team_id} as team {team_id} does not exist.")
                 continue
 
@@ -166,11 +171,13 @@ def insert_data_to_db(connection, table, data, tournament_type):
         values = ', '.join(['%s'] * len(item))
         updates = ', '.join([f"{key} = EXCLUDED.{key}" for key in item.keys()])
 
+        primary_keys = primary_key_columns(table)
+        on_conflict = f"ON CONFLICT ({', '.join(primary_keys)}) DO UPDATE SET {updates}"
+
         query = f"""
         INSERT INTO {table} ({columns})
         VALUES ({values})
-        ON CONFLICT ({', '.join(primary_key_columns(table))})
-        DO UPDATE SET {updates};
+        {on_conflict};
         """
         
         try:
@@ -188,28 +195,22 @@ def primary_key_columns(table):
     Returns the primary key columns for the specified table.
     Different tables have different primary key configurations.
     """
-    if table == 'players':
-        return ['player_id', 'tournament_type']
-    elif table == 'teams':
-        return ['team_id', 'tournament_type']
-    elif table == 'tournaments':
-        return ['tournament_id', 'tournament_type']
-    elif table == 'leagues':
-        return ['league_id', 'tournament_type']
-    elif table == 'team_mapping':
-        return ['internal_team_id', 'platform_game_id']
-    elif table == 'player_mapping':
-        return ['internal_player_id', 'platform_game_id']
-    elif table == 'game_mapping':
-        return ['platform_game_id']
-    else:
-        return ['id']
+    pk_map = {
+        'leagues': ['league_id', 'tournament_type'],
+        'tournaments': ['tournament_id', 'tournament_type'],
+        'teams': ['team_id', 'tournament_type'],
+        'players': ['player_id', 'tournament_type'],
+        'game_mapping': ['platform_game_id'],
+        'player_mapping': ['internal_player_id', 'platform_game_id'],
+        'team_mapping': ['internal_team_id', 'platform_game_id']
+    }
+    return pk_map.get(table, ['id'])
 
 def populate_table(table, tournament, year):
     """
     Main function to handle the population of data into the specified table.
     Loads data from a JSON file and either inserts or updates it in the corresponding database table.
-    Special handling is applied for 'mapping_data' tables.
+    Special handling is applied for 'mapping_data' and 'players' tables.
     """
     connection = create_connection()
     if connection is None:
@@ -223,7 +224,10 @@ def populate_table(table, tournament, year):
     data = load_json_data(filepath)
 
     if table == 'mapping_data':
-        insert_mapping_data(connection, data, tournament, year)
+        insert_mapping_data(connection, data, tournament)
+    elif table == 'players':
+        data = rename_id_field(data, table)
+        insert_player_data(connection, data, tournament)
     else:
         data = rename_id_field(data, table)
         insert_data_to_db(connection, table, data, tournament)
@@ -239,6 +243,7 @@ def rename_id_field(data, table):
         'players': 'player_id',
         'teams': 'team_id',
         'tournaments': 'tournament_id',
+        'leagues': 'league_id'
     }
 
     if table in id_field_mapping:
@@ -247,6 +252,15 @@ def rename_id_field(data, table):
             if 'id' in item and id_field not in item:
                 item[id_field] = item.pop('id')
     return data
+
+def populate_all_tables(tournament, year):
+    """
+    Populates all tables in the correct order.
+    """
+    tables = ['leagues', 'tournaments', 'teams', 'players', 'mapping_data']
+    for table in tables:
+        print(f"\nPopulating {table} table...")
+        populate_table(table, tournament, year)
 
 if __name__ == "__main__":
     """
@@ -279,13 +293,15 @@ if __name__ == "__main__":
     print("3: Players")
     print("4: Teams")
     print("5: Mapping")
+    print("6: All")
 
     data_type_map = {
         '1': 'leagues',
         '2': 'tournaments',
         '3': 'players',
         '4': 'teams',
-        '5': 'mapping_data'
+        '5': 'mapping_data',
+        '6': 'all'
     }
 
     data_type = input("\nEnter the number corresponding to the data type you want to populate: ").strip()
@@ -298,7 +314,10 @@ if __name__ == "__main__":
         #     execute_schema(connection, '../db/schema.sql')
         #     connection.close()
 
-        # Populate the selected table
-        populate_table(table, tournament, year)
+        # Populate the selected table or all tables
+        if table == 'all':
+            populate_all_tables(tournament, year)
+        else:
+            populate_table(table, tournament, year)
     else:
         print("Invalid choice.")

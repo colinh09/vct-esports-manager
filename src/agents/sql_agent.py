@@ -9,7 +9,7 @@ class SqlAgent(BaseAgent):
         When asked about a player, always use the get_player_info_by_handle function to retrieve information. 
         For player statistics, use get_player_game_stats or get_player_tournament_stats as appropriate. 
         Always use these functions to provide accurate, up-to-date information."""
-        self.agent_foundation_model = "anthropic.claude-v2"
+        self.agent_foundation_model = "amazon.titan-text-express-v1"
         self.lambda_function_name = "SQL"
         self.agent_functions = [
             {

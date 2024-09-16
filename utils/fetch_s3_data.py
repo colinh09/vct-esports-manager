@@ -29,7 +29,7 @@ def download_gzip_and_write_to_json(file_name, full_url):
         print(f"Failed to download {file_name}")
 
 def download_esports_files(tournament, specific_files=None):
-    directory = f"../data/{tournament}/esports-data"
+    directory = f"/home/colin/vct-esports-manager/data/{tournament}/esports-data"
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -47,7 +47,7 @@ def download_esports_files(tournament, specific_files=None):
 
 def download_games(tournament, year, specific_game_id=None):
     start_time = time.time()
-    mapping_file = f"../data/{tournament}/esports-data/mapping_data.json"
+    mapping_file = f"/home/colin/vct-esports-manager/data/{tournament}/esports-data/mapping_data.json"
     
     if not os.path.isfile(mapping_file):
         print(f"Mapping file not found: {mapping_file}")
@@ -56,7 +56,7 @@ def download_games(tournament, year, specific_game_id=None):
     with open(mapping_file, "r") as json_file:
         mappings_data = json.load(json_file)
 
-    directory = f"../data/{tournament}/games/{year}"
+    directory = f"/home/colin/vct-esports-manager/data/{tournament}/games/{year}"
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -75,7 +75,7 @@ def download_games(tournament, year, specific_game_id=None):
                 print(f"----- Processed {game_counter} games, current run time: {round((time.time() - start_time)/60, 2)} minutes")
 
 def download_fandom_data(file_choice):
-    directory = f"../data/fandom"
+    directory = f"/home/colin/vct-esports-manager/data/fandom"
     if not os.path.exists(directory):
         os.makedirs(directory)
 

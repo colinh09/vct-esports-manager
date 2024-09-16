@@ -36,6 +36,16 @@ def create_table(cursor, table_name, schema):
     )
     cursor.execute(create_query)
 
+def table_exists(cursor, table_name):
+    cursor.execute(sql.SQL("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = {}
+        )
+    """).format(sql.Literal(table_name)))
+    return cursor.fetchone()[0]
+
 def copy_table(source_cursor, dest_cursor, table_name, batch_size=10000):
     # Get column names
     source_cursor.execute(sql.SQL("SELECT * FROM {} LIMIT 0").format(sql.Identifier(table_name)))
@@ -100,19 +110,24 @@ def main():
         return
 
     try:
-        # Get table names
-        tables = get_table_names(source_cursor)
-        logging.info(f"Found {len(tables)} tables to copy")
+        # Get table names from source database
+        source_tables = get_table_names(source_cursor)
+        logging.info(f"Found {len(source_tables)} tables in source database")
+
+        # Identify tables that don't exist in the destination database
+        tables_to_create = [table for table in source_tables if not table_exists(dest_cursor, table)]
+        logging.info(f"{len(tables_to_create)} out of {len(source_tables)} tables need to be created in destination database")
 
         # Copy each table
-        for table in tables:
-            logging.info(f"Starting to copy table: {table}")
+        for table in tables_to_create:
+            logging.info(f"Processing table: {table}")
             
             # Get table schema
             schema = get_table_schema(source_cursor, table)
             
-            # Create table in destination if it doesn't exist
-            create_table(dest_cursor, table, schema)
+            if table in tables_to_create:
+                logging.info(f"Creating table '{table}' in destination database")
+                create_table(dest_cursor, table, schema)
             
             # Copy data
             copy_table(source_cursor, dest_cursor, table)
