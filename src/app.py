@@ -1,6 +1,7 @@
 import logging
 from agents.sql_agent import SqlAgent
 from utils.aws_utils import check_aws_permissions
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

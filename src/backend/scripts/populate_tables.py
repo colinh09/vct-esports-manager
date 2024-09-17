@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("RDS_DATABASE_URL")
 BASE_DATA_DIR = os.getenv("BASE_DATA_DIR")
 
 def create_connection():
@@ -65,7 +66,7 @@ def record_exists(connection, table, id_columns, id_values):
 def insert_player_data(connection, data, tournament_type):
     """
     Inserts or updates player data in the 'players' table based on the 'created_at' field.
-    Updates if the new data has a more recent 'created_at' value for the same player.
+    Updates if the new data has a more recent 'created_at' value for the same player_id, tournament_type, and handle.
     """
     cursor = connection.cursor()
 
@@ -76,8 +77,8 @@ def insert_player_data(connection, data, tournament_type):
         cursor.execute("""
             SELECT created_at
             FROM players
-            WHERE player_id = %s AND tournament_type = %s
-        """, (item['player_id'], tournament_type))
+            WHERE player_id = %s AND tournament_type = %s AND handle = %s
+        """, (item['player_id'], tournament_type, item['handle']))
 
         result = cursor.fetchone()
 
@@ -91,9 +92,9 @@ def insert_player_data(connection, data, tournament_type):
                 query = f"""
                 UPDATE players
                 SET {columns}
-                WHERE player_id = %s AND tournament_type = %s
+                WHERE player_id = %s AND tournament_type = %s AND handle = %s
                 """
-                cursor.execute(query, list(item.values()) + [item['player_id'], tournament_type])
+                cursor.execute(query, list(item.values()) + [item['player_id'], tournament_type, item['handle']])
                 connection.commit()
                 print(f"Updated player {item['handle']} with more recent data.")
         else:
@@ -139,7 +140,7 @@ def insert_mapping_data(connection, data, tournament_type):
                 'player_id': player_id,
                 'tournament_type': tournament_type,
                 'platform_game_id': platform_game_id,
-                'agent_guid': ''  # Set to empty string as requested
+                'agent_guid': '' 
             }
             insert_data_to_db(connection, 'player_mapping', [player_data], tournament_type)
 
@@ -161,11 +162,15 @@ def insert_data_to_db(connection, table, data, tournament_type):
     """
     Inserts data into the specified table.
     If a conflict occurs, performs an update based on the primary key columns of the table.
+    Ignores 'start_time' and 'end_time' fields.
     """
     cursor = connection.cursor()
 
     for item in data:
         item['tournament_type'] = tournament_type
+        
+        item.pop('start_time', None)
+        item.pop('end_time', None)
 
         columns = ', '.join(item.keys())
         values = ', '.join(['%s'] * len(item))
@@ -199,7 +204,7 @@ def primary_key_columns(table):
         'leagues': ['league_id', 'tournament_type'],
         'tournaments': ['tournament_id', 'tournament_type'],
         'teams': ['team_id', 'tournament_type'],
-        'players': ['player_id', 'tournament_type'],
+        'players': ['player_id', 'tournament_type', 'handle'],
         'game_mapping': ['platform_game_id'],
         'player_mapping': ['internal_player_id', 'platform_game_id'],
         'team_mapping': ['internal_team_id', 'platform_game_id']

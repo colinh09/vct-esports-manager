@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS teams (
   UNIQUE (team_id, tournament_type)
 );
 
--- Create Players Table
+-- Modified Players Table
 CREATE TABLE IF NOT EXISTS players (
   player_id VARCHAR(255),
   tournament_type VARCHAR(255),
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS players (
   home_team_id VARCHAR(255),
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
-  PRIMARY KEY (player_id, tournament_type)
+  PRIMARY KEY (player_id, tournament_type, handle)
 );
 
 -- Create Game Mapping Table
@@ -62,11 +62,12 @@ CREATE TABLE IF NOT EXISTS game_mapping (
   FOREIGN KEY (tournament_id, tournament_type) REFERENCES tournaments(tournament_id, tournament_type) ON DELETE CASCADE
 );
 
--- Create Player Mapping Table
+-- Modified Player Mapping Table
 CREATE TABLE IF NOT EXISTS player_mapping (
   internal_player_id VARCHAR(255),
   player_id VARCHAR(255),
   tournament_type VARCHAR(255),
+  handle VARCHAR(255),
   platform_game_id VARCHAR(255),
   agent_guid VARCHAR(255),
   kills INTEGER,
@@ -74,7 +75,7 @@ CREATE TABLE IF NOT EXISTS player_mapping (
   assists INTEGER,
   combat_score INTEGER,
   PRIMARY KEY (internal_player_id, platform_game_id),
-  FOREIGN KEY (player_id, tournament_type) REFERENCES players(player_id, tournament_type) ON DELETE CASCADE,
+  FOREIGN KEY (player_id, tournament_type, handle) REFERENCES players(player_id, tournament_type, handle) ON DELETE CASCADE,
   FOREIGN KEY (platform_game_id) REFERENCES game_mapping(platform_game_id) ON DELETE CASCADE
 );
 

@@ -2,6 +2,7 @@ import os
 import ijson
 import psycopg2
 import logging
+from logging.handlers import RotatingFileHandler
 import requests
 import json
 import gzip
@@ -12,60 +13,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("RDS_DATABASE_URL")
 BASE_DATA_DIR = "/home/colin/vct-esports-manager/data"
 S3_BUCKET_URL = "https://vcthackathon-data.s3.us-west-2.amazonaws.com"
 
-logging.basicConfig(
-    filename="data_processor.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# Set up logging for non-error events
+info_logger = logging.getLogger('info_logger')
+info_logger.setLevel(logging.INFO)
+info_handler = RotatingFileHandler('data_processor.log', maxBytes=100*1024*1024, backupCount=5)
+info_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+info_handler.setFormatter(info_formatter)
+info_logger.addHandler(info_handler)
+
+# Set up logging for error events
+error_logger = logging.getLogger('error_logger')
+error_logger.setLevel(logging.ERROR)
+error_handler = RotatingFileHandler('error.log', maxBytes=100*1024*1024, backupCount=5)
+error_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+error_handler.setFormatter(error_formatter)
+error_logger.addHandler(error_handler)
 
 def create_connection():
     try:
         return psycopg2.connect(DATABASE_URL)
     except Exception as e:
-        logging.error(f"Error connecting to database: {e}")
+        error_logger.error(f"Error connecting to database: {e}")
         return None
-
-def ensure_columns_exist(connection, reset=False):
-    cursor = connection.cursor()
-    try:
-        if reset:
-            cursor.execute("""
-                ALTER TABLE player_mapping
-                DROP COLUMN IF EXISTS kills,
-                DROP COLUMN IF EXISTS deaths,
-                DROP COLUMN IF EXISTS assists,
-                DROP COLUMN IF EXISTS combat_score,
-                DROP COLUMN IF EXISTS agent_guid;
-            """)
-            logging.info("Dropped existing stat columns.")
-
-        cursor.execute("""
-            ALTER TABLE player_mapping
-            ADD COLUMN IF NOT EXISTS kills INTEGER,
-            ADD COLUMN IF NOT EXISTS deaths INTEGER,
-            ADD COLUMN IF NOT EXISTS assists INTEGER,
-            ADD COLUMN IF NOT EXISTS combat_score INTEGER,
-            ADD COLUMN IF NOT EXISTS agent_guid TEXT;
-        """)
-        connection.commit()
-        logging.info("Ensured necessary columns exist in player_mapping table.")
-    except Exception as e:
-        connection.rollback()
-        logging.error(f"Error ensuring columns: {e}")
-    finally:
-        cursor.close()
 
 def download_and_process_game(tournament, year, platform_game_id, connection):
     cursor = connection.cursor()
     try:
-        # Check if the platform_game_id exists in the game_mapping table
         cursor.execute("SELECT 1 FROM game_mapping WHERE platform_game_id = %s", (platform_game_id,))
         if cursor.fetchone() is None:
-            logging.info(f"Skipping game {platform_game_id}: Not present in game_mapping table")
+            info_logger.info(f"Skipping game {platform_game_id}: Not present in game_mapping table")
             return None
 
         directory = f"{BASE_DATA_DIR}/{tournament}/games/{year}"
@@ -75,30 +55,27 @@ def download_and_process_game(tournament, year, platform_game_id, connection):
         file_path = f"{directory}/{platform_game_id}.json"
         full_url = f"{S3_BUCKET_URL}/{tournament}/games/{year}/{platform_game_id}.json.gz"
 
-        # Download the file
         response = requests.get(full_url)
         if response.status_code == 200:
             gzip_bytes = BytesIO(response.content)
             with gzip.GzipFile(fileobj=gzip_bytes, mode="rb") as gzipped_file:
                 with open(file_path, 'wb') as output_file:
                     shutil.copyfileobj(gzipped_file, output_file)
-            logging.info(f"Downloaded: {platform_game_id}.json")
+            info_logger.info(f"Downloaded: {platform_game_id}.json")
 
-            # Process the file
             event_counts = process_json_file(file_path, connection)
-            logging.info(f"Processed: {platform_game_id}.json")
-            logging.info(f"Event counts: {event_counts}")
+            info_logger.info(f"Processed: {platform_game_id}.json")
+            info_logger.info(f"Event counts: {event_counts}")
 
-            # Delete the file
             os.remove(file_path)
-            logging.info(f"Deleted: {platform_game_id}.json")
+            info_logger.info(f"Deleted: {platform_game_id}.json")
 
             return event_counts
         else:
-            logging.error(f"Failed to download {platform_game_id}.json")
+            error_logger.error(f"Failed to download {platform_game_id}.json")
             return None
     except Exception as e:
-        logging.error(f"Error processing game {platform_game_id}: {e}")
+        error_logger.error(f"Error processing game {platform_game_id}: {e}")
         return None
     finally:
         cursor.close()
@@ -119,7 +96,7 @@ def process_json_file(filepath, connection):
                 'ability_used': 0
             }
 
-            logging.info("Processing JSON file...")
+            info_logger.info("Processing JSON file...")
             for event in events:
                 if 'snapshot' in event:
                     final_snapshot = event['snapshot']
@@ -146,20 +123,20 @@ def process_json_file(filepath, connection):
                         insert_ability_used(connection, event)
                         event_counts['ability_used'] += 1
                 except psycopg2.errors.ForeignKeyViolation as fk_error:
-                    logging.error(f"Foreign key violation for game {platform_game_id}: {fk_error}")
+                    error_logger.error(f"Foreign key violation for game {platform_game_id}: {fk_error}")
                     connection.rollback()
                     return None
 
-            logging.info("Finished processing events, updating player stats...")
+            info_logger.info("Finished processing events, updating player stats...")
             if final_snapshot and 'players' in final_snapshot:
                 update_player_stats(connection, platform_game_id, final_snapshot['players'])
             else:
-                logging.warning(f"No valid final snapshot found in file {filepath}")
+                error_logger.warning(f"No valid final snapshot found in file {filepath}")
 
             return event_counts
 
     except Exception as e:
-        logging.error(f"Error processing file {filepath}: {e}")
+        error_logger.error(f"Error processing file {filepath}: {e}")
         return None
 
 def update_player_stats(connection, platform_game_id, player_stats):
@@ -179,10 +156,10 @@ def update_player_stats(connection, platform_game_id, player_stats):
             """, (kills, deaths, assists, combat_score, internal_player_id, platform_game_id))
             
         connection.commit()
-        logging.info("Updated player stats successfully")
+        info_logger.info("Updated player stats successfully")
     except Exception as e:
         connection.rollback()
-        logging.error(f"Error updating player stats: {e}")
+        error_logger.error(f"Error updating player stats: {e}")
     finally:
         cursor.close()
 
@@ -201,10 +178,10 @@ def process_configuration_event(connection, event_data):
             """, (agent_guid, internal_player_id, platform_game_id))
             
         connection.commit()
-        logging.info("Processed configuration event and updated agent GUIDs")
+        info_logger.info("Processed configuration event and updated agent GUIDs")
     except Exception as e:
         connection.rollback()
-        logging.error(f"Error processing configuration event: {e}")
+        error_logger.error(f"Error processing configuration event: {e}")
     finally:
         cursor.close()
 
@@ -235,7 +212,7 @@ def insert_player_died(connection, event_data):
         connection.commit()
     except Exception as e:
         connection.rollback()
-        logging.error(f"Error inserting player died event: {e}")
+        error_logger.error(f"Error inserting player died event: {e}")
     finally:
         cursor.close()
 
@@ -254,7 +231,7 @@ def insert_spike_status(connection, event_data):
         connection.commit()
     except Exception as e:
         connection.rollback()
-        logging.error(f"Error inserting spike status event: {e}")
+        error_logger.error(f"Error inserting spike status event: {e}")
     finally:
         cursor.close()
 
@@ -276,7 +253,7 @@ def insert_damage_event(connection, event_data):
         connection.commit()
     except Exception as e:
         connection.rollback()
-        logging.error(f"Error inserting damage event: {e}")
+        error_logger.error(f"Error inserting damage event: {e}")
     finally:
         cursor.close()
 
@@ -295,7 +272,7 @@ def insert_player_revived(connection, event_data):
         connection.commit()
     except Exception as e:
         connection.rollback()
-        logging.error(f"Error inserting player revived event: {e}")
+        error_logger.error(f"Error inserting player revived event: {e}")
     finally:
         cursor.close()
 
@@ -316,22 +293,20 @@ def insert_ability_used(connection, event_data):
         connection.commit()
     except Exception as e:
         connection.rollback()
-        logging.error(f"Error inserting ability used event: {e}")
+        error_logger.error(f"Error inserting ability used event: {e}")
     finally:
         cursor.close()
 
-def populate_data(tournament_type, year, reset_columns, start_game=0):
+def populate_data(tournament_type, year, start_game=0):
     connection = create_connection()
     if connection is None:
-        logging.error("Could not connect to the database.")
+        error_logger.error("Could not connect to the database.")
         return
-
-    ensure_columns_exist(connection, reset_columns)
 
     mapping_file = f"{BASE_DATA_DIR}/{tournament_type}/esports-data/mapping_data.json"
     
     if not os.path.isfile(mapping_file):
-        logging.error(f"Mapping file not found: {mapping_file}")
+        error_logger.error(f"Mapping file not found: {mapping_file}")
         return
 
     with open(mapping_file, "r") as json_file:
@@ -348,7 +323,7 @@ def populate_data(tournament_type, year, reset_columns, start_game=0):
 
     for index, esports_game in enumerate(mappings_data[start_game:], start_game + 1):
         platform_game_id = esports_game["platformGameId"]
-        logging.info(f"Processing game {index}/{len(mappings_data)}: {platform_game_id}")
+        info_logger.info(f"Processing game {index}/{len(mappings_data)}: {platform_game_id}")
         
         event_counts = download_and_process_game(tournament_type, year, platform_game_id, connection)
         
@@ -357,12 +332,12 @@ def populate_data(tournament_type, year, reset_columns, start_game=0):
                 total_event_counts[event_type] += count
 
         if index % 10 == 0:
-            logging.info(f"----- Processed {index} games")
-            logging.info(f"Current total event counts: {total_event_counts}")
+            info_logger.info(f"----- Processed {index} games")
+            info_logger.info(f"Current total event counts: {total_event_counts}")
 
-    logging.info("Data processing complete. Total event counts:")
+    info_logger.info("Data processing complete. Total event counts:")
     for event_type, count in total_event_counts.items():
-        logging.info(f"{event_type}: {count}")
+        info_logger.info(f"{event_type}: {count}")
 
     connection.close()
 
@@ -384,17 +359,15 @@ if __name__ == "__main__":
 
     if tournament_type:
         year = input("Enter the year of the tournament: ").strip()
-        reset_option = input("Do you want to reset the stat columns? (y/n): ").strip().lower()
-        reset_columns = reset_option == 'y'
         start_game = int(input("Enter the game number to start from (0 to start from beginning): ").strip())
 
         if year.isdigit():
-            logging.info(f"Starting data population for {tournament_type} {year} from game {start_game}")
-            populate_data(tournament_type, year, reset_columns, start_game)
-            logging.info(f"Completed data population for {tournament_type} {year}")
+            info_logger.info(f"Starting data population for {tournament_type} {year} from game {start_game}")
+            populate_data(tournament_type, year, start_game)
+            info_logger.info(f"Completed data population for {tournament_type} {year}")
         else:
             print("Invalid year input.")
-            logging.error(f"Invalid year input: {year}")
+            error_logger.error(f"Invalid year input: {year}")
     else:
         print("Invalid selection.")
-        logging.error(f"Invalid tournament selection: {tournament_choice}")
+        error_logger.error(f"Invalid tournament selection: {tournament_choice}")

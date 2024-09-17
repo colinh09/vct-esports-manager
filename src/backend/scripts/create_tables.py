@@ -4,7 +4,8 @@ from psycopg2 import sql
 from dotenv import load_dotenv
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+# DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("RDS_DATABASE_URL")
 
 def create_connection():
     """

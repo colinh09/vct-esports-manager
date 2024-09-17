@@ -12,6 +12,9 @@ __pycache__/
 # Ignore error logs
 *errorlogs*
 
+# Don't push streamlit keys lol
+**/.streamlit/
+**/.streamlit/secrets.toml
 
 # Distribution / packaging
 .Python

@@ -1,0 +1,1794 @@
+{
+    "platformGameId": "val:fed63e04-ca7d-45c1-9df9-a173448359d1",
+    "snapshot": {
+      "observers": [
+        {
+          "displayName": "FSLOps1",
+          "observerId": {
+            "value": 11
+          },
+          "followedPlayerId": {
+            "value": 5
+          },
+          "tagLine": "eProd"
+        },
+        {
+          "displayName": "FSLOps6",
+          "observerId": {
+            "value": 12
+          },
+          "followedPlayerId": {
+            "value": 5
+          },
+          "tagLine": "eProd"
+        },
+        {
+          "displayName": "FSLOps8",
+          "observerId": {
+            "value": 13
+          },
+          "followedPlayerId": {
+            "value": -1
+          },
+          "tagLine": "eProd"
+        },
+        {
+          "displayName": "FSLOps7",
+          "observerId": {
+            "value": 14
+          },
+          "followedPlayerId": {
+            "value": 5
+          },
+          "tagLine": "eProd"
+        },
+        {
+          "displayName": "FSLOps2",
+          "observerId": {
+            "value": 15
+          },
+          "followedPlayerId": {
+            "value": 5
+          },
+          "tagLine": "eProd"
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": -1
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": -1
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": -1
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": -1
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": -1
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 5
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 10
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 10
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 10
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 10
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 10
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 10
+          },
+          "tagLine": ""
+        },
+        {
+          "displayName": "",
+          "observerId": {
+            "value": -1
+          },
+          "followedPlayerId": {
+            "value": 10
+          },
+          "tagLine": ""
+        }
+      ],
+      "players": [
+        {
+          "deaths": 14,
+          "kills": 16,
+          "playerId": {
+            "value": 1
+          },
+          "aliveState": {
+            "equippedItem": {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "58442F45-4783-42A2-F4CB-789A27555889",
+                  "displayName": "Task Force 809 Knife"
+                },
+                "levelFallback": {
+                  "guid": "A2A5860A-4A34-8510-E067-93ABC9F18E12",
+                  "displayName": "Task Force 809 Knife"
+                },
+                "chromaFallback": {
+                  "guid": "5D5B1D55-4047-A5C6-B1D2-23A940D55FB0",
+                  "displayName": "Task Force 809 Knife"
+                }
+              }
+            },
+            "velocity": {
+              "y": 0,
+              "x": 0,
+              "z": 0
+            },
+            "health": 76.6690063,
+            "position": {
+              "y": 537.57196,
+              "x": 12627.3066,
+              "z": 200.298492
+            },
+            "viewVector": {
+              "y": -0.777598679,
+              "x": 0.628730953,
+              "z": 0.00613411516
+            },
+            "armor": 3.33100128
+          },
+          "money": 4800,
+          "inventory": [
+            {
+              "ammunition": {
+                "inMagazine": 30,
+                "inReserve": 68
+              },
+              "guid": "EE8E8D15-496B-07AC-E5F6-8FAE5D4C7B1A",
+              "skin": {
+                "skinFallback": {
+                  "guid": "36791B03-452D-8DAD-0091-898CC28D2196",
+                  "displayName": "Oni Phantom"
+                },
+                "levelFallback": {
+                  "guid": "1B24255D-4F50-9202-7B6F-F7873DB580D1",
+                  "displayName": "Oni Phantom Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "B639A920-424B-B855-1E30-7F9B026889F1",
+                  "displayName": "Oni Phantom Level 4\r\n(Variant 1 Black)"
+                }
+              },
+              "slot": {
+                "slot": "PRIMARY"
+              },
+              "displayName": "Phantom",
+              "charm": {
+                "charmFallback": {
+                  "guid": "E370D9F9-4DEB-9AE4-A594-24947CB21B2D",
+                  "displayName": "Lunar"
+                }
+              }
+            },
+            {
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "skin": {
+                "skinFallback": {
+                  "guid": "D653F4A7-4E92-2559-0A97-2C9D46D009B3",
+                  "displayName": "Prime Classic"
+                },
+                "levelFallback": {
+                  "guid": "E8A35DDB-4CE7-3867-154C-94803ED12A24",
+                  "displayName": "Prime Classic Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "D9DCE0EC-464C-DF67-63A3-1F9A05D322AD",
+                  "displayName": "Prime Classic"
+                }
+              },
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "displayName": "Classic",
+              "charm": {
+                "charmFallback": {
+                  "guid": "B01739F3-4DA9-0792-AA40-1094BC99E34D",
+                  "displayName": "ChibiKilljoy"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "58442F45-4783-42A2-F4CB-789A27555889",
+                  "displayName": "Task Force 809 Knife"
+                },
+                "levelFallback": {
+                  "guid": "A2A5860A-4A34-8510-E067-93ABC9F18E12",
+                  "displayName": "Task Force 809 Knife"
+                },
+                "chromaFallback": {
+                  "guid": "5D5B1D55-4047-A5C6-B1D2-23A940D55FB0",
+                  "displayName": "Task Force 809 Knife"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 4978,
+              "roundScore": 520
+            }
+          },
+          "assists": 9,
+          "abilities": [
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 4,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 7
+            }
+          ]
+        },
+        {
+          "deaths": 10,
+          "kills": 16,
+          "playerId": {
+            "value": 2
+          },
+          "aliveState": {
+            "velocity": {
+              "y": 0,
+              "x": 0,
+              "z": 0
+            },
+            "health": 100,
+            "viewVector": {
+              "y": -0.85646081,
+              "x": 0.510232925,
+              "z": -0.0783403143
+            },
+            "armor": 50,
+            "position": {
+              "y": 1423.78357,
+              "x": 10057.0078,
+              "z": 206.956909
+            }
+          },
+          "money": 6150,
+          "inventory": [
+            {
+              "ammunition": {
+                "inMagazine": 30,
+                "inReserve": 90
+              },
+              "guid": "EE8E8D15-496B-07AC-E5F6-8FAE5D4C7B1A",
+              "skin": {
+                "skinFallback": {
+                  "guid": "8C72AE0B-4357-1A75-AD62-FBAEC7B64F92",
+                  "displayName": "Champions 2022 Phantom"
+                },
+                "levelFallback": {
+                  "guid": "524B0C42-47DA-E7CA-DC04-85BA285B2E71",
+                  "displayName": "Champions 2022 Phantom"
+                },
+                "chromaFallback": {
+                  "guid": "0D81CEC6-46A2-300F-C3C6-7AA67C2B8547",
+                  "displayName": "Champions 2022 Phantom"
+                }
+              },
+              "slot": {
+                "slot": "PRIMARY"
+              },
+              "displayName": "Phantom",
+              "charm": {
+                "charmFallback": {
+                  "guid": "E370D9F9-4DEB-9AE4-A594-24947CB21B2D",
+                  "displayName": "Lunar"
+                }
+              }
+            },
+            {
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "skin": {
+                "skinFallback": {
+                  "guid": "D653F4A7-4E92-2559-0A97-2C9D46D009B3",
+                  "displayName": "Prime Classic"
+                },
+                "levelFallback": {
+                  "guid": "E8A35DDB-4CE7-3867-154C-94803ED12A24",
+                  "displayName": "Prime Classic Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "D9DCE0EC-464C-DF67-63A3-1F9A05D322AD",
+                  "displayName": "Prime Classic"
+                }
+              },
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "displayName": "Classic",
+              "charm": {
+                "charmFallback": {
+                  "guid": "4F22A129-48FA-C701-54E2-DBB01E5D1194",
+                  "displayName": "Sol"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "C5482640-4652-6948-29C6-769E8198DB27",
+                  "displayName": "Xenohunter Knife"
+                },
+                "levelFallback": {
+                  "guid": "BA8B620A-4A51-8ED6-D1A7-CB9A4B3D99BD",
+                  "displayName": "Xenohunter Knife Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "37714C64-482B-D68D-F704-139156A2577C",
+                  "displayName": "Xenohunter Knife"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 4472,
+              "roundScore": 0
+            }
+          },
+          "assists": 7,
+          "abilities": [
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 7,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 7
+            }
+          ]
+        },
+        {
+          "deaths": 12,
+          "kills": 20,
+          "playerId": {
+            "value": 3
+          },
+          "aliveState": {
+            "equippedItem": {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "1EA64C8D-43C4-FCE8-7354-01BDD6C0EE17",
+                  "displayName": "Champions 2021 Karambit"
+                },
+                "levelFallback": {
+                  "guid": "250FF684-42E9-108D-4722-A9A3AC8733E6",
+                  "displayName": "Champions 2021 Karambit Level 3 - Aura is active only when player has the most kills in the game"
+                },
+                "chromaFallback": {
+                  "guid": "62926DFC-4FFB-C65E-DD4B-8B96B6DEEE77",
+                  "displayName": "Champions 2021 Karambit"
+                }
+              }
+            },
+            "velocity": {
+              "y": 0,
+              "x": 0,
+              "z": 0
+            },
+            "health": 100,
+            "position": {
+              "y": 796.388184,
+              "x": 10050.2471,
+              "z": 300.298492
+            },
+            "viewVector": {
+              "y": -0.967986763,
+              "x": 0.247597039,
+              "z": -0.0412004218
+            },
+            "armor": 50
+          },
+          "money": 3750,
+          "inventory": [
+            {
+              "ammunition": {
+                "inMagazine": 25,
+                "inReserve": 68
+              },
+              "guid": "9C82E19D-4575-0200-1A81-3EACF00CF872",
+              "skin": {
+                "skinFallback": {
+                  "guid": "522A264E-4CA7-ADB0-6CF1-28B2EF938727",
+                  "displayName": "Prelude to Chaos Vandal"
+                },
+                "levelFallback": {
+                  "guid": "A4021006-49BE-E1F3-B2E1-CC8635694D0C",
+                  "displayName": "Prelude to Chaos Vandal Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "10FF3757-4099-F828-D391-E28D2E634924",
+                  "displayName": "Prelude to Chaos Vandal"
+                }
+              },
+              "slot": {
+                "slot": "PRIMARY"
+              },
+              "displayName": "Vandal",
+              "charm": {
+                "charmFallback": {
+                  "guid": "EF6DDFAB-45F9-7938-7FF2-9588DEC2F71D",
+                  "displayName": "EsportsVCTPurple"
+                }
+              }
+            },
+            {
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "skin": {
+                "skinFallback": {
+                  "guid": "111680FD-4562-F658-AF1C-ED8F9CFE9F9C",
+                  "displayName": "RGX 11z Pro Classic"
+                },
+                "levelFallback": {
+                  "guid": "4C741D16-4AB3-873F-99E0-7AB0C0643F08",
+                  "displayName": "RGX 11z Pro Classic Level 5"
+                },
+                "chromaFallback": {
+                  "guid": "63091EE5-47D9-F252-F7AD-09BB049C8673",
+                  "displayName": "RGX 11z Pro Classic Level 5\n(Variant 2 Blue)"
+                }
+              },
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "displayName": "Classic",
+              "charm": {
+                "charmFallback": {
+                  "guid": "65F51134-44F9-9D59-A99C-52ADD118E119",
+                  "displayName": "RankEP3_Iron"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "1EA64C8D-43C4-FCE8-7354-01BDD6C0EE17",
+                  "displayName": "Champions 2021 Karambit"
+                },
+                "levelFallback": {
+                  "guid": "250FF684-42E9-108D-4722-A9A3AC8733E6",
+                  "displayName": "Champions 2021 Karambit Level 3 - Aura is active only when player has the most kills in the game"
+                },
+                "chromaFallback": {
+                  "guid": "62926DFC-4FFB-C65E-DD4B-8B96B6DEEE77",
+                  "displayName": "Champions 2021 Karambit"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 5524,
+              "roundScore": 221
+            }
+          },
+          "assists": 9,
+          "abilities": [
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "569FDD95-4D10-43AB-CA70-79BECC718B46",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "569FDD95-4D10-43AB-CA70-79BECC718B46",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "569FDD95-4D10-43AB-CA70-79BECC718B46",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 8,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "569FDD95-4D10-43AB-CA70-79BECC718B46",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 8
+            }
+          ]
+        },
+        {
+          "deaths": 11,
+          "kills": 12,
+          "playerId": {
+            "value": 4
+          },
+          "aliveState": {
+            "equippedItem": {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "B73D7B16-4652-BC5B-5C4C-068AABB19D0A",
+                  "displayName": "Reaver Karambit"
+                },
+                "levelFallback": {
+                  "guid": "84D08CE6-468C-B95B-9BBB-408DCDCEE76F",
+                  "displayName": "Reaver Karambit Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "517F5413-4859-AB98-FEC8-4EBD39A15121",
+                  "displayName": "Reaver Karambit Level 2\r\n(Variant 2 Black)"
+                }
+              }
+            },
+            "velocity": {
+              "y": 0,
+              "x": 0,
+              "z": 0
+            },
+            "health": 72,
+            "position": {
+              "y": 1858.17261,
+              "x": 11090.6455,
+              "z": 200.298492
+            },
+            "viewVector": {
+              "y": -0.791775167,
+              "x": 0.602070808,
+              "z": -0.102969982
+            },
+            "armor": 0
+          },
+          "money": 5200,
+          "inventory": [
+            {
+              "displayName": "Phantom",
+              "ammunition": {
+                "inMagazine": 30,
+                "inReserve": 63
+              },
+              "guid": "EE8E8D15-496B-07AC-E5F6-8FAE5D4C7B1A",
+              "slot": {
+                "slot": "PRIMARY"
+              },
+              "skin": {
+                "skinFallback": {
+                  "guid": "36791B03-452D-8DAD-0091-898CC28D2196",
+                  "displayName": "Oni Phantom"
+                },
+                "levelFallback": {
+                  "guid": "1B24255D-4F50-9202-7B6F-F7873DB580D1",
+                  "displayName": "Oni Phantom Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "6F9C7109-485A-F2A3-CB1D-9F9A31A995D7",
+                  "displayName": "Oni Phantom Level 4\r\n(Variant 2 Green)"
+                }
+              }
+            },
+            {
+              "displayName": "Classic",
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "skin": {
+                "skinFallback": {
+                  "guid": "46F32F75-4FC8-7121-8A77-DB8DB43AFC67",
+                  "displayName": "Spectrum Classic"
+                },
+                "levelFallback": {
+                  "guid": "40489A32-47C8-710C-5ED9-738A61A3DB38",
+                  "displayName": "Spectrum Classic Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "E6A6EA31-4A05-8889-B065-D09A536AFFFD",
+                  "displayName": "Spectrum Classic"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "B73D7B16-4652-BC5B-5C4C-068AABB19D0A",
+                  "displayName": "Reaver Karambit"
+                },
+                "levelFallback": {
+                  "guid": "84D08CE6-468C-B95B-9BBB-408DCDCEE76F",
+                  "displayName": "Reaver Karambit Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "517F5413-4859-AB98-FEC8-4EBD39A15121",
+                  "displayName": "Reaver Karambit Level 2\r\n(Variant 2 Black)"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 3405,
+              "roundScore": 39
+            }
+          },
+          "assists": 3,
+          "abilities": [
+            {
+              "baseCharges": 5,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "BACKPACK"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 8,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "BACKPACK"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 8,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 8,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 8
+            }
+          ]
+        },
+        {
+          "deaths": 16,
+          "kills": 15,
+          "playerId": {
+            "value": 5
+          },
+          "aliveState": {
+            "equippedItem": {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "C5482640-4652-6948-29C6-769E8198DB27",
+                  "displayName": "Xenohunter Knife"
+                },
+                "levelFallback": {
+                  "guid": "BA8B620A-4A51-8ED6-D1A7-CB9A4B3D99BD",
+                  "displayName": "Xenohunter Knife Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "37714C64-482B-D68D-F704-139156A2577C",
+                  "displayName": "Xenohunter Knife"
+                }
+              }
+            },
+            "velocity": {
+              "y": 0,
+              "x": 0,
+              "z": 0
+            },
+            "health": 81.6685,
+            "position": {
+              "y": 112.568207,
+              "x": 13079.043,
+              "z": 200.15
+            },
+            "viewVector": {
+              "y": -0.657341599,
+              "x": 0.751185715,
+              "z": -0.060183391
+            },
+            "armor": 13.3314972
+          },
+          "money": 6050,
+          "inventory": [
+            {
+              "displayName": "Phantom",
+              "ammunition": {
+                "inMagazine": 11,
+                "inReserve": 90
+              },
+              "guid": "EE8E8D15-496B-07AC-E5F6-8FAE5D4C7B1A",
+              "slot": {
+                "slot": "PRIMARY"
+              },
+              "skin": {
+                "skinFallback": {
+                  "guid": "499ACF05-4F79-E345-3714-57BF7AA163EA",
+                  "displayName": "RGX 11z Pro Phantom"
+                },
+                "levelFallback": {
+                  "guid": "C97C97B2-4F3B-FB34-32A4-548D32863042",
+                  "displayName": "RGX 11z Pro Phantom Level 5"
+                },
+                "chromaFallback": {
+                  "guid": "F399CE20-4D22-B504-DBAE-F8907BF25135",
+                  "displayName": "RGX 11z Pro Phantom Level 5\n(Variant 2 Blue)"
+                }
+              }
+            },
+            {
+              "displayName": "Classic",
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "skin": {
+                "skinFallback": {
+                  "guid": "D653F4A7-4E92-2559-0A97-2C9D46D009B3",
+                  "displayName": "Prime Classic"
+                },
+                "levelFallback": {
+                  "guid": "E8A35DDB-4CE7-3867-154C-94803ED12A24",
+                  "displayName": "Prime Classic Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "02390051-4309-22D4-B733-C09FBFCF2E7F",
+                  "displayName": "Prime Classic Level 4\r\n(Variant 2 Blue)"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "C5482640-4652-6948-29C6-769E8198DB27",
+                  "displayName": "Xenohunter Knife"
+                },
+                "levelFallback": {
+                  "guid": "BA8B620A-4A51-8ED6-D1A7-CB9A4B3D99BD",
+                  "displayName": "Xenohunter Knife Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "37714C64-482B-D68D-F704-139156A2577C",
+                  "displayName": "Xenohunter Knife"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 4418,
+              "roundScore": 569
+            }
+          },
+          "assists": 3,
+          "abilities": [
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "F94C3B30-42BE-E959-889C-5AA313DBA261",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "F94C3B30-42BE-E959-889C-5AA313DBA261",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "F94C3B30-42BE-E959-889C-5AA313DBA261",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 6,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "F94C3B30-42BE-E959-889C-5AA313DBA261",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 8
+            }
+          ]
+        },
+        {
+          "deaths": 15,
+          "kills": 12,
+          "playerId": {
+            "value": 6
+          },
+          "money": 150,
+          "inventory": [
+            {
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "skin": {
+                "skinFallback": {
+                  "guid": "D653F4A7-4E92-2559-0A97-2C9D46D009B3",
+                  "displayName": "Prime Classic"
+                },
+                "levelFallback": {
+                  "guid": "E8A35DDB-4CE7-3867-154C-94803ED12A24",
+                  "displayName": "Prime Classic Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "D9DCE0EC-464C-DF67-63A3-1F9A05D322AD",
+                  "displayName": "Prime Classic"
+                }
+              },
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "displayName": "Classic",
+              "charm": {
+                "charmFallback": {
+                  "guid": "D475F530-4A71-9165-953C-20B806C5D50E",
+                  "displayName": "RankEP1_Radiant"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "4F6033D5-4B24-94F0-31AB-F6969A2C926C",
+                  "displayName": "Titanmail Mace"
+                },
+                "levelFallback": {
+                  "guid": "9ACC22E7-4457-F294-0861-6BBEECB46316",
+                  "displayName": "Titanmail Mace Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "9A2409BE-4195-C29E-54DD-608C10A7A51C",
+                  "displayName": "Titanmail Mace"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 3596,
+              "roundScore": 70
+            }
+          },
+          "assists": 6,
+          "abilities": [
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "6F2A04CA-43E0-BE17-7F36-B3908627744D",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "6F2A04CA-43E0-BE17-7F36-B3908627744D",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "6F2A04CA-43E0-BE17-7F36-B3908627744D",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 6,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "6F2A04CA-43E0-BE17-7F36-B3908627744D",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 7
+            }
+          ]
+        },
+        {
+          "deaths": 17,
+          "kills": 9,
+          "playerId": {
+            "value": 7
+          },
+          "money": 3400,
+          "inventory": [
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "1B8DE6D7-4F37-7170-ACD7-E78829F7959A",
+                  "displayName": "Terminus A Quo"
+                },
+                "levelFallback": {
+                  "guid": "4840C1FC-4570-D487-1DFF-68977A0D6E67",
+                  "displayName": "Terminus A Quo Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "E07B0750-4EB5-C92C-F863-838F159AC23E",
+                  "displayName": "Terminus A Quo Level 2\n(Variant 1 Purple)"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 2707,
+              "roundScore": 0
+            }
+          },
+          "assists": 10,
+          "abilities": [
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 2,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "9F0D8BA9-4140-B941-57D3-A7AD57C6B417",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 7
+            }
+          ]
+        },
+        {
+          "deaths": 14,
+          "kills": 17,
+          "playerId": {
+            "value": 8
+          },
+          "money": 200,
+          "inventory": [
+            {
+              "displayName": "Classic",
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "skin": {
+                "skinFallback": {
+                  "guid": "46F32F75-4FC8-7121-8A77-DB8DB43AFC67",
+                  "displayName": "Spectrum Classic"
+                },
+                "levelFallback": {
+                  "guid": "40489A32-47C8-710C-5ED9-738A61A3DB38",
+                  "displayName": "Spectrum Classic Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "C2E3235A-426A-0A34-8559-6492CA4434A9",
+                  "displayName": "Spectrum Classic Level 4\n(Variant 1 Black)"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "C5482640-4652-6948-29C6-769E8198DB27",
+                  "displayName": "Xenohunter Knife"
+                },
+                "levelFallback": {
+                  "guid": "BA8B620A-4A51-8ED6-D1A7-CB9A4B3D99BD",
+                  "displayName": "Xenohunter Knife Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "37714C64-482B-D68D-F704-139156A2577C",
+                  "displayName": "Xenohunter Knife"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 5212,
+              "roundScore": 78
+            }
+          },
+          "assists": 6,
+          "abilities": [
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 4,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "DADE69B4-4F5A-8528-247B-219E5A1FACD6",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 7
+            }
+          ]
+        },
+        {
+          "deaths": 17,
+          "kills": 16,
+          "playerId": {
+            "value": 9
+          },
+          "money": 0,
+          "inventory": [
+            {
+              "displayName": "Classic",
+              "ammunition": {
+                "inMagazine": 12,
+                "inReserve": 36
+              },
+              "guid": "29A0CFAB-485B-F5D5-779A-B59F85E204A8",
+              "slot": {
+                "slot": "SECONDARY"
+              },
+              "skin": {
+                "skinFallback": {
+                  "guid": "D653F4A7-4E92-2559-0A97-2C9D46D009B3",
+                  "displayName": "Prime Classic"
+                },
+                "levelFallback": {
+                  "guid": "E8A35DDB-4CE7-3867-154C-94803ED12A24",
+                  "displayName": "Prime Classic Level 4"
+                },
+                "chromaFallback": {
+                  "guid": "D9DCE0EC-464C-DF67-63A3-1F9A05D322AD",
+                  "displayName": "Prime Classic"
+                }
+              }
+            },
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "2E4300F9-49B3-6BBE-AF7C-94A6F56FF12E",
+                  "displayName": "Equilibrium"
+                },
+                "levelFallback": {
+                  "guid": "99A21016-41BF-2DFE-43E6-6F9FFE50D8C0",
+                  "displayName": "Equilibrium Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "F6EB564B-4B08-AD4C-6704-42BF4E91453E",
+                  "displayName": "Equilibrium Level 2\r\n(Variant 1 Dark)"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 4597,
+              "roundScore": 0
+            }
+          },
+          "assists": 2,
+          "abilities": [
+            {
+              "baseCharges": 2,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "ADD6443A-41BD-E414-F6AD-E58D267F4E95",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "ADD6443A-41BD-E414-F6AD-E58D267F4E95",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 1,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "ADD6443A-41BD-E414-F6AD-E58D267F4E95",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 5,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "ADD6443A-41BD-E414-F6AD-E58D267F4E95",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 7
+            }
+          ]
+        },
+        {
+          "deaths": 16,
+          "kills": 9,
+          "playerId": {
+            "value": 10
+          },
+          "money": 800,
+          "inventory": [
+            {
+              "slot": {
+                "slot": "MELEE"
+              },
+              "displayName": "Melee",
+              "guid": "2F59173C-4BED-B6C3-2191-DEA9B58BE9C7",
+              "skin": {
+                "skinFallback": {
+                  "guid": "59F627F1-42F3-670D-5323-3499C2913289",
+                  "displayName": "Magepunk Shock Gauntlet"
+                },
+                "levelFallback": {
+                  "guid": "4379EF43-451A-A1EB-7C69-919ABAFF068B",
+                  "displayName": "Magepunk Shock Gauntlet Level 2"
+                },
+                "chromaFallback": {
+                  "guid": "C67186EC-423C-F3BB-8A9F-FA8E73BCD6C3",
+                  "displayName": "Magepunk Shock Gauntlet Level 2 (Variant 2 Pink)"
+                }
+              }
+            }
+          ],
+          "scores": {
+            "combatScore": {
+              "totalScore": 2542,
+              "roundScore": 55
+            }
+          },
+          "assists": 3,
+          "abilities": [
+            {
+              "baseCharges": 5,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "BACKPACK"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 7,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "BACKPACK"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 7,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "ABILITY_1"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "ABILITY_2"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 0,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "GRENADE_ABILITY"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 0
+            },
+            {
+              "baseCharges": 3,
+              "ability": {
+                "fallback": {
+                  "displayName": "",
+                  "guid": "22697A3D-45BF-8DD7-4FEC-84A9E28C69D7",
+                  "inventorySlot": {
+                    "slot": "ULTIMATE"
+                  }
+                },
+                "type": "UNKNOWN"
+              },
+              "temporaryCharges": 0,
+              "maxCharges": 8
+            }
+          ]
+        }
+      ]
+    },
