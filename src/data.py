@@ -1,6 +1,6 @@
 import pyspark
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.types import StructType, ArrayType, MapType
 
 def get_spark_session():
     return SparkSession.builder \
@@ -11,48 +11,78 @@ def get_spark_session():
 
 def get_data():
     spark = get_spark_session()
-    # Read the JSON file as a single column DataFrame
-    raw_df = spark.read.json('data/sample.json', multiLine=True)
+    raw_df = spark.read.json('../data/test-files/sample/sample.json', multiLine=True)
+    return raw_df
+
+def print_schema_recursively(schema, level=0, file=None):
+    for field in schema.fields:
+        indent = "  " * level
+        field_info = f"{indent}- {field.name}: {field.dataType}"
+        print(field_info)
+        if file:
+            file.write(field_info + "\n")
+        
+        if isinstance(field.dataType, StructType):
+            print_schema_recursively(field.dataType, level + 1, file)
+        elif isinstance(field.dataType, ArrayType):
+            element_type = field.dataType.elementType
+            array_info = f"{indent}  [Array of {element_type}]:"
+            print(array_info)
+            if file:
+                file.write(array_info + "\n")
+            if isinstance(element_type, StructType):
+                print_schema_recursively(element_type, level + 2, file)
+        elif isinstance(field.dataType, MapType):
+            map_info = f"{indent}  {{Map}}: key_type: {field.dataType.keyType}, value_type: {field.dataType.valueType}"
+            print(map_info)
+            if file:
+                file.write(map_info + "\n")
+
+def expand_struct_type(struct_type, level=0):
+    indent = "  " * level
+    result = "{\n"
+    for field in struct_type.fields:
+        result += f"{indent}  \"{field.name}\": "
+        if isinstance(field.dataType, StructType):
+            result += expand_struct_type(field.dataType, level + 1)
+        elif isinstance(field.dataType, ArrayType):
+            result += f"[Array of {field.dataType.elementType}]"
+            if isinstance(field.dataType.elementType, StructType):
+                result += " " + expand_struct_type(field.dataType.elementType, level + 1)
+        elif isinstance(field.dataType, MapType):
+            result += f"{{Map}} key_type: {field.dataType.keyType}, value_type: {field.dataType.valueType}"
+        else:
+            result += str(field.dataType)
+        result += ",\n"
+    result = result.rstrip(",\n") + "\n" + indent + "}"
+    return result
+
+def analyze_json_structure(df):
+    schema = df.schema
     
-    # Define the list of event types
-    event_types = [
-        "abilityUsed", "configuration", "damageEvent", "gameDecided", "gamePhase",
-        "inventoryTransaction", "metadata", "observerTarget", "platformGameId",
-        "playerDied", "playerSpawn", "roundCeremony", "roundDecided", "roundEnded",
-        "roundStarted", "snapshot", "spikeDefuseCheckpointReached", "spikeDefuseStarted",
-        "spikeDefuseStopped", "spikePlantCompleted", "spikePlantStarted", "spikePlantStopped",
-        "spikeStatus"
-    ]
-    
-    # Create columns for each event type
-    for event_type in event_types:
-        raw_df = raw_df.withColumn(event_type, col(event_type))
-    
-    # Select all the event type columns
-    df = raw_df.select(*event_types)
-    
-    return df
+    with open("json_structure.txt", "w") as file:
+        file.write("JSON Structure:\n")
+        for field in schema.fields:
+            field_info = f"- {field.name}: "
+            if isinstance(field.dataType, StructType):
+                field_info += expand_struct_type(field.dataType)
+            elif isinstance(field.dataType, ArrayType):
+                field_info += f"[Array of {field.dataType.elementType}]"
+                if isinstance(field.dataType.elementType, StructType):
+                    field_info += " " + expand_struct_type(field.dataType.elementType)
+            elif isinstance(field.dataType, MapType):
+                field_info += f"{{Map}} key_type: {field.dataType.keyType}, value_type: {field.dataType.valueType}"
+            else:
+                field_info += str(field.dataType)
+            file.write(field_info + "\n\n")
+        print(f"JSON structure has been written to json_structure.txt")
 
 def get_column_counts(df):
     for col_name in df.columns:
-        # Count non-null values in each column
         non_null_count = df.select(col_name).na.drop().count()
         print(f"Column: {col_name}, Non-null Count: {non_null_count}")
 
-def print_first_20_rows(df):
-    # Convert to Pandas DataFrame for easier printing
-    pandas_df = df.limit(20).toPandas()
-    
-    # Print each row
-    for index, row in pandas_df.iterrows():
-        print(f"\nRow {index + 1}:")
-        for column in pandas_df.columns:
-            value = row[column]
-            if value is not None:
-                print(f"  {column}: {value}")
-
 # Main execution
 df = get_data()  # Load your data
+analyze_json_structure(df)  # Analyze and print the JSON structure to file
 get_column_counts(df)  # Get counts of each column
-print("\nFirst 20 rows of the DataFrame:")
-print_first_20_rows(df)

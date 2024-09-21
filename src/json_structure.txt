@@ -1,0 +1,545 @@
+JSON Structure:
+- abilityUsed: {
+  "ability": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  },
+  "chargesConsumed": LongType(),
+  "playerId": {
+    "value": LongType()
+  }
+}
+
+- configuration: {
+  "players": [Array of StructType([StructField('accountId', StructType([StructField('type', StringType(), True), StructField('value', StringType(), True)]), True), StructField('displayName', StringType(), True), StructField('playerId', StructType([StructField('value', LongType(), True)]), True), StructField('selectedAgent', StructType([StructField('fallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True), StructField('type', StringType(), True)]), True), StructField('tagLine', StringType(), True), StructField('type', StringType(), True)])] {
+    "accountId": {
+      "type": StringType(),
+      "value": StringType()
+    },
+    "displayName": StringType(),
+    "playerId": {
+      "value": LongType()
+    },
+    "selectedAgent": {
+      "fallback": {
+        "displayName": StringType(),
+        "guid": StringType()
+      },
+      "type": StringType()
+    },
+    "tagLine": StringType(),
+    "type": StringType()
+  },
+  "selectedMap": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType()
+    },
+    "id": StringType()
+  },
+  "spikeMode": {
+    "attackingTeam": {
+      "value": LongType()
+    },
+    "completedRounds": [Array of StructType([StructField('roundNumber', LongType(), True), StructField('spikeModeResult', StructType([StructField('attackingTeam', StructType([StructField('value', LongType(), True)]), True), StructField('cause', StringType(), True), StructField('defendingTeam', StructType([StructField('value', LongType(), True)]), True)]), True), StructField('winningTeam', StructType([StructField('value', LongType(), True)]), True)])] {
+      "roundNumber": LongType(),
+      "spikeModeResult": {
+        "attackingTeam": {
+          "value": LongType()
+        },
+        "cause": StringType(),
+        "defendingTeam": {
+          "value": LongType()
+        }
+      },
+      "winningTeam": {
+        "value": LongType()
+      }
+    },
+    "currentRound": LongType(),
+    "defendingTeam": {
+      "value": LongType()
+    },
+    "roundsToWin": LongType()
+  },
+  "teams": [Array of StructType([StructField('name', StringType(), True), StructField('playersInTeam', ArrayType(StructType([StructField('value', LongType(), True)]), True), True), StructField('teamId', StructType([StructField('value', LongType(), True)]), True)])] {
+    "name": StringType(),
+    "playersInTeam": [Array of StructType([StructField('value', LongType(), True)])] {
+      "value": LongType()
+    },
+    "teamId": {
+      "value": LongType()
+    }
+  }
+}
+
+- damageEvent: {
+  "ability": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  },
+  "causerId": {
+    "value": LongType()
+  },
+  "damageAmount": DoubleType(),
+  "damageDealt": DoubleType(),
+  "hazard": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType()
+    },
+    "type": StringType()
+  },
+  "killEvent": BooleanType(),
+  "location": StringType(),
+  "victimId": {
+    "value": LongType()
+  },
+  "wallPen": BooleanType(),
+  "weapon": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  }
+}
+
+- gameDecided: {
+  "spikeMode": {
+    "attackingTeam": {
+      "value": LongType()
+    },
+    "completedRounds": [Array of StructType([StructField('roundNumber', LongType(), True), StructField('spikeModeResult', StructType([StructField('attackingTeam', StructType([StructField('value', LongType(), True)]), True), StructField('cause', StringType(), True), StructField('defendingTeam', StructType([StructField('value', LongType(), True)]), True)]), True), StructField('winningTeam', StructType([StructField('value', LongType(), True)]), True)])] {
+      "roundNumber": LongType(),
+      "spikeModeResult": {
+        "attackingTeam": {
+          "value": LongType()
+        },
+        "cause": StringType(),
+        "defendingTeam": {
+          "value": LongType()
+        }
+      },
+      "winningTeam": {
+        "value": LongType()
+      }
+    },
+    "currentRound": LongType(),
+    "defendingTeam": {
+      "value": LongType()
+    },
+    "roundsToWin": LongType()
+  },
+  "state": StringType(),
+  "winningTeam": {
+    "value": LongType()
+  }
+}
+
+- gamePhase: {
+  "phase": StringType(),
+  "roundNumber": LongType()
+}
+
+- inventoryTransaction: {
+  "ability": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  },
+  "armor": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  },
+  "objective": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  },
+  "player": {
+    "value": LongType()
+  },
+  "price": StringType(),
+  "purchasingPlayer": {
+    "value": LongType()
+  },
+  "transactionType": StringType(),
+  "weapon": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  }
+}
+
+- metadata: {
+  "currentGamePhase": {
+    "phase": StringType(),
+    "roundNumber": LongType()
+  },
+  "eventTime": {
+    "includedPauses": StringType(),
+    "omittingPauses": StringType()
+  },
+  "gameId": {
+    "value": StringType()
+  },
+  "gameVersion": StringType(),
+  "playback": LongType(),
+  "sequenceNumber": LongType(),
+  "serverInfo": {
+    "processId": StringType(),
+    "rfc190Scope": StringType()
+  },
+  "stage": LongType(),
+  "wallTime": StringType()
+}
+
+- observerTarget: {
+  "observerId": {
+    "value": LongType()
+  },
+  "targetId": {
+    "value": LongType()
+  }
+}
+
+- platformGameId: StringType()
+
+- playerDied: {
+  "ability": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  },
+  "assistants": [Array of StructType([StructField('assistantId', StructType([StructField('value', LongType(), True)]), True)])] {
+    "assistantId": {
+      "value": LongType()
+    }
+  },
+  "deceasedId": {
+    "value": LongType()
+  },
+  "hazard": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType()
+    },
+    "type": StringType()
+  },
+  "killerId": {
+    "value": LongType()
+  },
+  "weapon": {
+    "fallback": {
+      "displayName": StringType(),
+      "guid": StringType(),
+      "inventorySlot": {
+        "slot": StringType()
+      }
+    },
+    "type": StringType()
+  }
+}
+
+- playerSpawn: {
+  "player": {
+    "value": LongType()
+  }
+}
+
+- roundCeremony: {
+  "fallback": {
+    "displayName": StringType(),
+    "guid": StringType()
+  },
+  "type": StringType()
+}
+
+- roundDecided: {
+  "result": {
+    "roundNumber": LongType(),
+    "spikeModeResult": {
+      "attackingTeam": {
+        "value": LongType()
+      },
+      "cause": StringType(),
+      "defendingTeam": {
+        "value": LongType()
+      }
+    },
+    "winningTeam": {
+      "value": LongType()
+    }
+  }
+}
+
+- roundEnded: {
+  "roundNumber": LongType()
+}
+
+- roundStarted: {
+  "roundNumber": LongType(),
+  "spikeMode": {
+    "attackingTeam": {
+      "value": LongType()
+    },
+    "completedRounds": [Array of StructType([StructField('roundNumber', LongType(), True), StructField('spikeModeResult', StructType([StructField('attackingTeam', StructType([StructField('value', LongType(), True)]), True), StructField('cause', StringType(), True), StructField('defendingTeam', StructType([StructField('value', LongType(), True)]), True)]), True), StructField('winningTeam', StructType([StructField('value', LongType(), True)]), True)])] {
+      "roundNumber": LongType(),
+      "spikeModeResult": {
+        "attackingTeam": {
+          "value": LongType()
+        },
+        "cause": StringType(),
+        "defendingTeam": {
+          "value": LongType()
+        }
+      },
+      "winningTeam": {
+        "value": LongType()
+      }
+    },
+    "currentRound": LongType(),
+    "defendingTeam": {
+      "value": LongType()
+    },
+    "roundsToWin": LongType()
+  }
+}
+
+- snapshot: {
+  "observers": [Array of StructType([StructField('displayName', StringType(), True), StructField('followedPlayerId', StructType([StructField('value', LongType(), True)]), True), StructField('observerId', StructType([StructField('value', LongType(), True)]), True), StructField('tagLine', StringType(), True)])] {
+    "displayName": StringType(),
+    "followedPlayerId": {
+      "value": LongType()
+    },
+    "observerId": {
+      "value": LongType()
+    },
+    "tagLine": StringType()
+  },
+  "players": [Array of StructType([StructField('abilities', ArrayType(StructType([StructField('ability', StructType([StructField('fallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True), StructField('inventorySlot', StructType([StructField('slot', StringType(), True)]), True)]), True), StructField('type', StringType(), True)]), True), StructField('baseCharges', LongType(), True), StructField('maxCharges', LongType(), True), StructField('temporaryCharges', LongType(), True)]), True), True), StructField('aliveState', StructType([StructField('armor', DoubleType(), True), StructField('equippedItem', StructType([StructField('ammunition', StructType([StructField('inMagazine', LongType(), True), StructField('inReserve', LongType(), True)]), True), StructField('charm', StructType([StructField('charmFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True)]), True), StructField('displayName', StringType(), True), StructField('guid', StringType(), True), StructField('skin', StructType([StructField('chromaFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True), StructField('levelFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True), StructField('skinFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True)]), True), StructField('slot', StructType([StructField('slot', StringType(), True)]), True)]), True), StructField('health', DoubleType(), True), StructField('position', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True), StructField('velocity', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True), StructField('viewVector', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True)]), True), StructField('assists', LongType(), True), StructField('deaths', LongType(), True), StructField('inventory', ArrayType(StructType([StructField('ammunition', StructType([StructField('inMagazine', LongType(), True), StructField('inReserve', LongType(), True)]), True), StructField('charm', StructType([StructField('charmFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True)]), True), StructField('displayName', StringType(), True), StructField('guid', StringType(), True), StructField('skin', StructType([StructField('chromaFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True), StructField('levelFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True), StructField('skinFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True)]), True), StructField('slot', StructType([StructField('slot', StringType(), True)]), True)]), True), True), StructField('kills', LongType(), True), StructField('loadoutValue', LongType(), True), StructField('money', LongType(), True), StructField('playerId', StructType([StructField('value', LongType(), True)]), True), StructField('scores', StructType([StructField('combatScore', StructType([StructField('roundScore', LongType(), True), StructField('totalScore', LongType(), True)]), True)]), True), StructField('timeseries', ArrayType(StructType([StructField('position', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True), StructField('timestamp', StructType([StructField('includedPauses', StringType(), True), StructField('omittingPauses', StringType(), True)]), True), StructField('velocity', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True), StructField('viewVector', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True)]), True), True)])] {
+    "abilities": [Array of StructType([StructField('ability', StructType([StructField('fallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True), StructField('inventorySlot', StructType([StructField('slot', StringType(), True)]), True)]), True), StructField('type', StringType(), True)]), True), StructField('baseCharges', LongType(), True), StructField('maxCharges', LongType(), True), StructField('temporaryCharges', LongType(), True)])] {
+      "ability": {
+        "fallback": {
+          "displayName": StringType(),
+          "guid": StringType(),
+          "inventorySlot": {
+            "slot": StringType()
+          }
+        },
+        "type": StringType()
+      },
+      "baseCharges": LongType(),
+      "maxCharges": LongType(),
+      "temporaryCharges": LongType()
+    },
+    "aliveState": {
+      "armor": DoubleType(),
+      "equippedItem": {
+        "ammunition": {
+          "inMagazine": LongType(),
+          "inReserve": LongType()
+        },
+        "charm": {
+          "charmFallback": {
+            "displayName": StringType(),
+            "guid": StringType()
+          }
+        },
+        "displayName": StringType(),
+        "guid": StringType(),
+        "skin": {
+          "chromaFallback": {
+            "displayName": StringType(),
+            "guid": StringType()
+          },
+          "levelFallback": {
+            "displayName": StringType(),
+            "guid": StringType()
+          },
+          "skinFallback": {
+            "displayName": StringType(),
+            "guid": StringType()
+          }
+        },
+        "slot": {
+          "slot": StringType()
+        }
+      },
+      "health": DoubleType(),
+      "position": {
+        "x": DoubleType(),
+        "y": DoubleType(),
+        "z": DoubleType()
+      },
+      "velocity": {
+        "x": DoubleType(),
+        "y": DoubleType(),
+        "z": DoubleType()
+      },
+      "viewVector": {
+        "x": DoubleType(),
+        "y": DoubleType(),
+        "z": DoubleType()
+      }
+    },
+    "assists": LongType(),
+    "deaths": LongType(),
+    "inventory": [Array of StructType([StructField('ammunition', StructType([StructField('inMagazine', LongType(), True), StructField('inReserve', LongType(), True)]), True), StructField('charm', StructType([StructField('charmFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True)]), True), StructField('displayName', StringType(), True), StructField('guid', StringType(), True), StructField('skin', StructType([StructField('chromaFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True), StructField('levelFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True), StructField('skinFallback', StructType([StructField('displayName', StringType(), True), StructField('guid', StringType(), True)]), True)]), True), StructField('slot', StructType([StructField('slot', StringType(), True)]), True)])] {
+      "ammunition": {
+        "inMagazine": LongType(),
+        "inReserve": LongType()
+      },
+      "charm": {
+        "charmFallback": {
+          "displayName": StringType(),
+          "guid": StringType()
+        }
+      },
+      "displayName": StringType(),
+      "guid": StringType(),
+      "skin": {
+        "chromaFallback": {
+          "displayName": StringType(),
+          "guid": StringType()
+        },
+        "levelFallback": {
+          "displayName": StringType(),
+          "guid": StringType()
+        },
+        "skinFallback": {
+          "displayName": StringType(),
+          "guid": StringType()
+        }
+      },
+      "slot": {
+        "slot": StringType()
+      }
+    },
+    "kills": LongType(),
+    "loadoutValue": LongType(),
+    "money": LongType(),
+    "playerId": {
+      "value": LongType()
+    },
+    "scores": {
+      "combatScore": {
+        "roundScore": LongType(),
+        "totalScore": LongType()
+      }
+    },
+    "timeseries": [Array of StructType([StructField('position', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True), StructField('timestamp', StructType([StructField('includedPauses', StringType(), True), StructField('omittingPauses', StringType(), True)]), True), StructField('velocity', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True), StructField('viewVector', StructType([StructField('x', DoubleType(), True), StructField('y', DoubleType(), True), StructField('z', DoubleType(), True)]), True)])] {
+      "position": {
+        "x": DoubleType(),
+        "y": DoubleType(),
+        "z": DoubleType()
+      },
+      "timestamp": {
+        "includedPauses": StringType(),
+        "omittingPauses": StringType()
+      },
+      "velocity": {
+        "x": DoubleType(),
+        "y": DoubleType(),
+        "z": DoubleType()
+      },
+      "viewVector": {
+        "x": DoubleType(),
+        "y": DoubleType(),
+        "z": DoubleType()
+      }
+    }
+  }
+}
+
+- spikeDefuseCheckpointReached: {
+  "playerId": {
+    "value": LongType()
+  },
+  "progress": StringType()
+}
+
+- spikeDefuseStarted: {
+  "playerId": {
+    "value": LongType()
+  }
+}
+
+- spikeDefuseStopped: {
+  "playerId": {
+    "value": LongType()
+  }
+}
+
+- spikePlantCompleted: {
+  "plantLocation": {
+    "x": DoubleType(),
+    "y": DoubleType(),
+    "z": DoubleType()
+  },
+  "playerId": {
+    "value": LongType()
+  }
+}
+
+- spikePlantStarted: {
+  "playerId": {
+    "value": LongType()
+  }
+}
+
+- spikePlantStopped: {
+  "playerId": {
+    "value": LongType()
+  }
+}
+
+- spikeStatus: {
+  "carrier": {
+    "value": LongType()
+  },
+  "status": StringType()
+}
+
