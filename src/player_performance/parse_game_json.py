@@ -174,6 +174,44 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
         carrier = player_map.get(carrier_id, {}).get('displayName', '[unknown]')
         return f"Spike status: {status}, Carrier: {carrier}."
     
+    # New event handlers
+    elif event_type == 'roundDecided':
+        round_number = safe_get(event_data, 'result', 'roundNumber')
+        winning_team_id = safe_get(event_data, 'result', 'winningTeam', 'value')
+        cause = safe_get(event_data, 'result', 'spikeModeResult', 'cause')
+        result = f"Round {round_number} decided. Winning team: {winning_team_id}, Cause: {cause}"
+        return result
+    
+    elif event_type == 'spikePlantStarted':
+        player_id = safe_get(event_data, 'playerId', 'value')
+        player = player_map.get(player_id, {}).get('displayName', '[unknown]')
+        result = f"{player} started planting the spike."
+        return result
+    
+    elif event_type == 'spikePlantStopped':
+        player_id = safe_get(event_data, 'playerId', 'value')
+        player = player_map.get(player_id, {}).get('displayName', '[unknown]')
+        result = f"{player} stopped planting the spike."
+        return result
+    
+    elif event_type == 'spikeDefuseStarted':
+        player_id = safe_get(event_data, 'playerId', 'value')
+        player = player_map.get(player_id, {}).get('displayName', '[unknown]')
+        result = f"{player} started defusing the spike."
+        return result
+    
+    elif event_type == 'spikeDefuseStopped':
+        player_id = safe_get(event_data, 'playerId', 'value')
+        player = player_map.get(player_id, {}).get('displayName', '[unknown]')
+        result = f"{player} stopped defusing the spike."
+        return result
+    
+    elif event_type == 'gameDecided':
+        winning_team_id = safe_get(event_data, 'winningTeam', 'value')
+        state = safe_get(event_data, 'state')
+        result = f"Game decided. Winning team: {winning_team_id}, State: {state}"
+        return result
+    
     else:
         return None  # Return None for events we want to skip
 
@@ -207,6 +245,8 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
                 parsed_event = parse_event(event_type, event_data, player_map, include_snapshots, mappings)
                 if parsed_event:
                     round_events.append(f"[Round {current_round}] {parsed_event}")
+
+                    # print(f"[Round {current_round}] {event_type}: {parsed_event}")
         
         if 'roundEnded' in event:
             with open(os.path.join(output_dir, f'round_{current_round}.txt'), 'w') as f:

@@ -11,7 +11,7 @@ def get_spark_session():
 
 def get_data():
     spark = get_spark_session()
-    raw_df = spark.read.json('../data/test-files/sample/sample.json', multiLine=True)
+    raw_df = spark.read.json('../../data/test-files/sample/sample.json', multiLine=True)
     return raw_df
 
 def print_schema_recursively(schema, level=0, file=None):
