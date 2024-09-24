@@ -3,36 +3,92 @@ from db_connection import get_db_connection
 
 logger = logging.getLogger()
 
-def get_all_player_games(player_id, tournament_type):
+import logging
+from db_connection import get_db_connection
+from psycopg2.extras import RealDictCursor
+
+logger = logging.getLogger()
+
+def get_all_player_games(player_id, tournament_type, start_date=None, end_date=None):
     query = """
-    SELECT pm.internal_player_id, pm.platform_game_id
+    SELECT 
+        pm.internal_player_id, 
+        pm.platform_game_id, 
+        pm.handle, 
+        pm.agent_guid, 
+        pm.kills, 
+        pm.deaths, 
+        pm.assists, 
+        pm.combat_score, 
+        pm.agent_name, 
+        pm.agent_role, 
+        pm.average_combat_score,
+        gm.game_date,
+        gm.esports_game_id,
+        gm.tournament_id,
+        gm.total_rounds,
+        gm.winning_team
     FROM player_mapping pm
     JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
     WHERE pm.player_id = %s
-      AND pm.tournament_type = %s;
+      AND pm.tournament_type = %s
     """
+    params = [player_id, tournament_type]
+
+    if start_date:
+        query += " AND gm.game_date >= %s"
+        params.append(start_date)
+    if end_date:
+        query += " AND gm.game_date <= %s"
+        params.append(end_date)
+
     try:
         with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (player_id, tournament_type))
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query, tuple(params))
                 return cursor.fetchall()
     except Exception as e:
         logger.error(f"Error in get_all_player_games: {str(e)}")
         raise
 
-def get_all_player_games_from_tournament(player_id, tournament_type, tournament_id):
+def get_all_player_games_from_tournament(player_id, tournament_type, tournament_id, start_date=None, end_date=None):
     query = """
-    SELECT pm.internal_player_id, pm.platform_game_id
+    SELECT 
+        pm.internal_player_id, 
+        pm.platform_game_id, 
+        pm.handle, 
+        pm.agent_guid, 
+        pm.kills, 
+        pm.deaths, 
+        pm.assists, 
+        pm.combat_score, 
+        pm.agent_name, 
+        pm.agent_role, 
+        pm.average_combat_score,
+        gm.game_date,
+        gm.esports_game_id,
+        gm.tournament_id,
+        gm.total_rounds,
+        gm.winning_team
     FROM player_mapping pm
     JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
     WHERE pm.player_id = %s
       AND pm.tournament_type = %s
-      AND gm.tournament_id = %s;
+      AND gm.tournament_id = %s
     """
+    params = [player_id, tournament_type, tournament_id]
+
+    if start_date:
+        query += " AND gm.game_date >= %s"
+        params.append(start_date)
+    if end_date:
+        query += " AND gm.game_date <= %s"
+        params.append(end_date)
+
     try:
         with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (player_id, tournament_type, tournament_id))
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query, tuple(params))
                 return cursor.fetchall()
     except Exception as e:
         logger.error(f"Error in get_all_player_games_from_tournament: {str(e)}")
