@@ -240,13 +240,13 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
             current_round = safe_get(event['roundStarted'], 'roundNumber')
             round_events = []
         
+        wall_time = safe_get(event, 'metadata', 'wallTime')
+        
         for event_type, event_data in event.items():
             if event_type not in ['metadata', 'configuration', 'roundStarted', 'roundEnded', 'platformGameId', 'observerTarget']:
                 parsed_event = parse_event(event_type, event_data, player_map, include_snapshots, mappings)
                 if parsed_event:
-                    round_events.append(f"[Round {current_round}] {parsed_event}")
-
-                    # print(f"[Round {current_round}] {event_type}: {parsed_event}")
+                    round_events.append(f"[{wall_time}] {parsed_event}")
         
         if 'roundEnded' in event:
             with open(os.path.join(output_dir, f'round_{current_round}.txt'), 'w') as f:
