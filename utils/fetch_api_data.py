@@ -42,10 +42,18 @@ def fetch_and_save_weapons():
     weapons = fetch_data("weapons")
     save_to_json(weapons, "weapons.json")
 
+def fetch_and_save_maps():
+    """
+    Fetch map data and save it to a JSON file.
+    """
+    maps = fetch_data("maps")
+    save_to_json(maps, "maps.json")
+
 def main():
     ensure_data_directory()
     fetch_and_save_agents()
     fetch_and_save_weapons()
+    fetch_and_save_maps()
     print("Data fetched and saved successfully.")
 
 if __name__ == "__main__":
