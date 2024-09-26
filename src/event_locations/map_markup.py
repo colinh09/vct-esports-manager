@@ -2,6 +2,10 @@ import json
 import requests
 from PIL import Image, ImageDraw, ImageFont
 import io
+from decimal import Decimal, getcontext
+
+# Set a high precision for decimal calculations
+getcontext().prec = 50
 
 def download_image(url):
     response = requests.get(url)
@@ -12,21 +16,20 @@ def load_map_data(filename):
         return json.load(f)
 
 def transform_coordinates(x, y, map_data, image_width, image_height):
-    # Normalize the coordinates
-    norm_x = (x * map_data['xMultiplier']) + map_data['xScalarToAdd']
-    norm_y = (y * map_data['yMultiplier']) + map_data['yScalarToAdd']
+    # Use Decimal for high-precision calculations
+    x = Decimal(str(x))
+    y = Decimal(str(y))
+    xMultiplier = Decimal(str(map_data['xMultiplier']))
+    yMultiplier = Decimal(str(map_data['yMultiplier']))
+    xScalarToAdd = Decimal(str(map_data['xScalarToAdd']))
+    yScalarToAdd = Decimal(str(map_data['yScalarToAdd']))
     
-    # Rotate 90 degrees clockwise
-    rotated_x = norm_y
-    rotated_y = 1 - norm_x
+    # Scale and swap coordinates (implicit 90-degree rotation)
+    norm_x = (y * xMultiplier) + xScalarToAdd
+    norm_y = (x * yMultiplier) + yScalarToAdd
     
-    # Invert horizontally
-    inverted_x = 1 - rotated_x
-    inverted_y = rotated_y
-    
-    # Convert to pixel coordinates
-    pixel_x = int(inverted_x * image_height)
-    pixel_y = int(inverted_y * image_width)
+    pixel_x = int((norm_x * Decimal(str(image_height))).to_integral_value())
+    pixel_y = int((norm_y * Decimal(str(image_width))).to_integral_value())
     
     return pixel_x, pixel_y
 
@@ -39,7 +42,7 @@ def draw_callouts(image, map_data):
     image_width, image_height = image.size
     
     for callout in map_data['callouts']:
-        x, y = callout['location']['x'], callout['location']['y']
+        x, y = Decimal(str(callout['location']['x'])), Decimal(str(callout['location']['y']))
         pixel_x, pixel_y = transform_coordinates(x, y, map_data, image_width, image_height)
         
         # Draw a small circle for each callout
@@ -70,7 +73,7 @@ def main():
     draw_callouts(minimap, sunset_map)
     
     # Save the result
-    minimap.save('sunset_map_with_callouts2.png')
+    minimap.save('sunset_map_with_callouts.png')
     print("Map with callouts saved as 'sunset_map_with_callouts.png'")
 
 if __name__ == "__main__":
