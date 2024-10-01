@@ -1,0 +1,73 @@
+Valorant Map Data:
+Name: Ascent
+ID: 7EAECC1B-4337-BBF6-6AB9-04B8F06B3319
+Asset Path: /Game/Maps/Ascent/Ascent
+---
+Name: Split
+ID: D960549E-485C-E861-8D71-AA9D1AED12A2
+Asset Path: /Game/Maps/Bonsai/Bonsai
+---
+Name: Fracture
+ID: B529448B-4D60-346E-E89E-00A4C527A405
+Asset Path: /Game/Maps/Canyon/Canyon
+---
+Name: Bind
+ID: 2C9D57EC-4431-9C5E-2939-8F9EF6DD5CBA
+Asset Path: /Game/Maps/Duality/Duality
+---
+Name: Breeze
+ID: 2FB9A4FD-47B8-4E7D-A969-74B4046EBD53
+Asset Path: /Game/Maps/Foxtrot/Foxtrot
+---
+Name: District
+ID: 690B3ED2-4DFF-945B-8223-6DA834E30D24
+Asset Path: /Game/Maps/HURM/HURM_Alley/HURM_Alley
+---
+Name: Kasbah
+ID: 12452A9D-48C3-0B02-E7EB-0381C3520404
+Asset Path: /Game/Maps/HURM/HURM_Bowl/HURM_Bowl
+---
+Name: Drift
+ID: 2C09D728-42D5-30D8-43DC-96A05CC7EE9D
+Asset Path: /Game/Maps/HURM/HURM_Helix/HURM_Helix
+---
+Name: Piazza
+ID: DE28AA9B-4CBE-1003-320E-6CB3EC309557
+Asset Path: /Game/Maps/HURM/HURM_Yard/HURM_Yard
+---
+Name: Abyss
+ID: 224B0A95-48B9-F703-1BD8-67ACA101A61F
+Asset Path: /Game/Maps/Infinity/Infinity
+---
+Name: Lotus
+ID: 2FE4ED3A-450A-948B-6D6B-E89A78E680A9
+Asset Path: /Game/Maps/Jam/Jam
+---
+Name: Sunset
+ID: 92584FBE-486A-B1B2-9FAA-39B0F486B498
+Asset Path: /Game/Maps/Juliett/Juliett
+---
+Name: Basic Training
+ID: 1F10DAB3-4294-3827-FA35-C2AA00213CF3
+Asset Path: /Game/Maps/NPEV2/NPEV2
+---
+Name: Pearl
+ID: FD267378-4D1D-484F-FF52-77821ED10DC2
+Asset Path: /Game/Maps/Pitt/Pitt
+---
+Name: Icebox
+ID: E2AD5C54-4114-A870-9641-8EA21279579A
+Asset Path: /Game/Maps/Port/Port
+---
+Name: The Range
+ID: EE613EE9-28B7-4BEB-9666-08DB13BB2244
+Asset Path: /Game/Maps/Poveglia/Range
+---
+Name: The Range
+ID: 5914D1E0-40C4-CFDD-6B88-EBA06347686C
+Asset Path: /Game/Maps/PovegliaV2/RangeV2
+---
+Name: Haven
+ID: 2BEE0DC9-4FFE-519B-1CBD-7FBE763A6047
+Asset Path: /Game/Maps/Triad/Triad
+---

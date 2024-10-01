@@ -33,7 +33,7 @@ def download_esports_files(tournament, specific_files=None):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    esports_data_files = ["leagues", "tournaments", "players", "teams", "mapping_data"]
+    esports_data_files = ["leagues", "tournaments", "players", "teams", "mapping_data", "mapping_data_v2"]
 
     if specific_files:
         files_to_download = [file for file in esports_data_files if file in specific_files]
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         tournament = input("\nEnter tournament name (e.g., vct-international, vct-challengers, game-changers): ")
         
         print("\nAvailable esports data files:")
-        print("leagues, tournaments, players, teams, mapping_data")
+        print("leagues, tournaments, players, teams, mapping_data, mapping_data_v2")
         specific_files_input = input("\nEnter the specific esports data files you want to download (comma-separated), or type 'all' to download everything: ")
         
         if specific_files_input.lower() == 'all':

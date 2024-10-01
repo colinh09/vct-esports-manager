@@ -141,12 +141,13 @@ if __name__ == "__main__":
         maps_data = load_json_file(maps_json_file)
 
         # Find the correct map data
-        map_name = 'Lotus'
+        map_name = next((event['configuration']['selectedMap']['fallback']['guid'] 
+                         for event in game_data if 'configuration' in event), None)
         if map_name is None:
             print("Error: Map name not found in game data")
             exit(1)
 
-        map_data = next((map_data for map_data in maps_data if map_data['displayName'] == map_name), None)
+        map_data = next((map_data for map_data in maps_data if map_data['mapUrl'] == map_name), None)
         if map_data is None:
             print(f"Error: Map data not found for {map_name}")
             exit(1)
