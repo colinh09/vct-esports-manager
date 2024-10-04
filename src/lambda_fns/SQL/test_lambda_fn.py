@@ -142,9 +142,9 @@ def test_all_functions():
         "function": "get_map_visualization",
         "parameters": [
             {
-                "name": "platform_game_id",
+                "name": "player_id",
                 "type": "string",
-                "value": "val:52335af7-6cb2-4a2d-9d1e-f1bde383797e"
+                "value": "106229920360816436"
             }
         ],
         "messageVersion": "1.0"

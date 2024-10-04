@@ -50,8 +50,8 @@ def lambda_handler(event, context):
             end_date = parameters.get('end_date')
             result = get_player_role_analysis(player_id, tournament_id, tournament_type, start_date, end_date)
         elif function == 'get_map_visualization':
-            platform_game_id = parameters.get('platform_game_id')
-            result = get_map_visualization(platform_game_id)
+            player_id = parameters.get('player_id')
+            result = get_map_visualization(player_id)
         else:
             raise ValueError(f"Unknown function: {function}")
         

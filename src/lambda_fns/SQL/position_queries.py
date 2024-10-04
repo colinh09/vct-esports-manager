@@ -5,149 +5,167 @@ import io
 import base64
 from db_connection import get_db_connection
 from decimal import Decimal
+import requests
+from datetime import datetime
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-def get_game_positions(platform_game_id):
+def get_latest_game(player_id):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get player mappings for the game
         query = """
-            SELECT DISTINCT internal_player_id
-            FROM player_mapping
-            WHERE platform_game_id = %s
+            SELECT gm.platform_game_id, gm.map, gm.game_date
+            FROM game_mapping gm
+            JOIN player_mapping pm ON gm.platform_game_id = pm.platform_game_id
+            WHERE pm.player_id = %s
+            ORDER BY gm.game_date DESC
+            LIMIT 1
         """
-        cursor.execute(query, (platform_game_id,))
-        
-        all_results = cursor.fetchall()
-        logger.info(f"Player mapping query results: {all_results}")
-        
-        players = [row['internal_player_id'] for row in all_results if 'internal_player_id' in row]
-        logger.info(f"Processed players: {players}")
-
-        # Get player death events
-        cursor.execute("""
-            SELECT deceased_id, killer_id, deceased_x, deceased_y, killer_x, killer_y
-            FROM player_died
-            WHERE platform_game_id = %s
-        """, (platform_game_id,))
-        death_events = cursor.fetchall()
-        
-        if not death_events:
-            logger.warning(f"No death events found for game {platform_game_id}")
-        else:
-            logger.info(f"First death event: {death_events[0]}")
+        cursor.execute(query, (player_id,))
+        result = cursor.fetchone()
 
         cursor.close()
         conn.close()
 
-        return players, death_events
+        if result:
+            return result['platform_game_id'], result['map'], result['game_date']
+        else:
+            logger.warning(f"No games found for player {player_id}")
+            return None, None, None
 
     except Exception as e:
-        logger.error(f"Error in get_game_positions: {str(e)}", exc_info=True)
+        logger.error(f"Error in get_latest_game: {str(e)}", exc_info=True)
+        raise
+
+def get_map_data(map_url):
+    try:
+        with open('maps.json', 'r') as f:
+            maps_data = json.load(f)
+
+        for map_data in maps_data:
+            if map_data['mapUrl'] == map_url:
+                return {
+                    'displayIcon': map_data['displayIcon'],
+                    'xMultiplier': str(map_data['xMultiplier']),
+                    'yMultiplier': str(map_data['yMultiplier']),
+                    'xScalarToAdd': str(map_data['xScalarToAdd']),
+                    'yScalarToAdd': str(map_data['yScalarToAdd'])
+                }
+
+        logger.warning(f"Map data not found for {map_url}")
+        return None
+
+    except Exception as e:
+        logger.error(f"Error in get_map_data: {str(e)}", exc_info=True)
+        raise
+
+def get_game_events(platform_game_id, player_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+            SELECT 
+                deceased_x, deceased_y, killer_x, killer_y,
+                true_deceased_id, true_killer_id
+            FROM player_died
+            WHERE platform_game_id = %s 
+            AND (true_deceased_id = %s OR true_killer_id = %s)
+        """
+        cursor.execute(query, (platform_game_id, player_id, player_id))
+        events = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return events
+
+    except Exception as e:
+        logger.error(f"Error in get_game_events: {str(e)}", exc_info=True)
         raise
 
 def transform_coordinates(x, y, map_data, image_width, image_height):
     try:
         x, y = Decimal(str(x)), Decimal(str(y))
-        xMultiplier = Decimal(str(map_data['xMultiplier']))
-        yMultiplier = Decimal(str(map_data['yMultiplier']))
-        xScalarToAdd = Decimal(str(map_data['xScalarToAdd']))
-        yScalarToAdd = Decimal(str(map_data['yScalarToAdd']))
+        xMultiplier = Decimal(map_data['xMultiplier'])
+        yMultiplier = Decimal(map_data['yMultiplier'])
+        xScalarToAdd = Decimal(map_data['xScalarToAdd'])
+        yScalarToAdd = Decimal(map_data['yScalarToAdd'])
         
         norm_x = (y * xMultiplier) + xScalarToAdd
         norm_y = (x * yMultiplier) + yScalarToAdd
         
-        pixel_x = int((norm_x * Decimal(str(image_height))).to_integral_value())
-        pixel_y = int((norm_y * Decimal(str(image_width))).to_integral_value())
+        pixel_x = int((norm_x * Decimal(str(image_width))).to_integral_value())
+        pixel_y = int((norm_y * Decimal(str(image_height))).to_integral_value())
         
         return pixel_x, pixel_y
     except (ValueError, KeyError, TypeError) as e:
         logger.error(f"Error in transform_coordinates: {str(e)}")
         return None, None
 
-def create_map_visualization(platform_game_id):
+def create_map_visualization(player_id, platform_game_id, map_url, map_data):
     try:
-        players, death_events = get_game_positions(platform_game_id)
+        events = get_game_events(platform_game_id, player_id)
 
-        # Load map data
-        map_data = get_map_data(platform_game_id)
-
-        with Image.open("Lotus.png") as img:
-            draw = ImageDraw.Draw(img)
-            image_width, image_height = img.size
+        response = requests.get(map_data['displayIcon'])
+        img = Image.open(io.BytesIO(response.content))
+        draw = ImageDraw.Draw(img)
+        image_width, image_height = img.size
+        
+        for event in events:
+            deceased_x, deceased_y = transform_coordinates(event['deceased_x'], event['deceased_y'], map_data, image_width, image_height)
+            killer_x, killer_y = transform_coordinates(event['killer_x'], event['killer_y'], map_data, image_width, image_height)
             
-            for event in death_events:
-                logger.info(f"Processing event: {event}")
+            if all(coord is not None for coord in [killer_x, killer_y, deceased_x, deceased_y]):
+                if event['true_killer_id'] == player_id:
+                    # Player's kill
+                    draw.line((killer_x, killer_y, deceased_x, deceased_y), fill="green", width=2)
+                    draw.ellipse((deceased_x - 5, deceased_y - 5, deceased_x + 5, deceased_y + 5), fill="green")
+                elif event['true_deceased_id'] == player_id:
+                    # Player's death
+                    draw.line((killer_x, killer_y, deceased_x, deceased_y), fill="red", width=2)
+                    draw.ellipse((deceased_x - 5, deceased_y - 5, deceased_x + 5, deceased_y + 5), fill="red")
 
-                deceased_id = event['deceased_id']
-                killer_id = event['killer_id']
-                deceased_x = event['deceased_x']
-                deceased_y = event['deceased_y']
-                killer_x = event['killer_x']
-                killer_y = event['killer_y']
-                
-                logger.info(f"Raw coordinates - deceased: ({deceased_x}, {deceased_y}), killer: ({killer_x}, {killer_y})")
-                
-                deceased_pixel_x, deceased_pixel_y = transform_coordinates(deceased_x, deceased_y, map_data, image_width, image_height)
-                killer_pixel_x, killer_pixel_y = transform_coordinates(killer_x, killer_y, map_data, image_width, image_height)
-                
-                logger.info(f"Transformed coordinates - deceased: ({deceased_pixel_x}, {deceased_pixel_y}), killer: ({killer_pixel_x}, {killer_pixel_y})")
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
 
-                # Draw the line and points only if coordinates are valid
-                if all(coord is not None for coord in [killer_pixel_x, killer_pixel_y, deceased_pixel_x, deceased_pixel_y]):
-                    draw.line((killer_pixel_x, killer_pixel_y, deceased_pixel_x, deceased_pixel_y), 
-                              fill="red", width=2)
-
-                    draw.ellipse((deceased_pixel_x - 5, deceased_pixel_y - 5, 
-                                  deceased_pixel_x + 5, deceased_pixel_y + 5), 
-                                 fill="black")
-
-                    draw.text((deceased_pixel_x, deceased_pixel_y), 
-                              str(deceased_id), fill="white")
-                    draw.text((killer_pixel_x, killer_pixel_y), 
-                              str(killer_id), fill="white")
-                else:
-                    logger.warning(f"Skipping event due to invalid coordinates: {event}")
-
-            buffered = io.BytesIO()
-            img.save(buffered, format="PNG")
-            img_str = base64.b64encode(buffered.getvalue()).decode()
-
-            return img_str
-    except FileNotFoundError:
-        logger.error("Lotus.png not found in the current directory", exc_info=True)
-        raise
+        return img_str
     except Exception as e:
         logger.error(f"Error in create_map_visualization: {str(e)}", exc_info=True)
         raise
 
-def get_map_visualization(platform_game_id):
+def get_map_visualization(player_id):
     try:
-        img_str = create_map_visualization(platform_game_id)
+        platform_game_id, map_url, game_date = get_latest_game(player_id)
+        if not platform_game_id:
+            return {
+                "error": "No games found for the player",
+                "player_id": player_id
+            }
+
+        map_data = get_map_data(map_url)
+        if not map_data:
+            return {
+                "error": f"Map data not found for {map_url}",
+                "player_id": player_id,
+                "platform_game_id": platform_game_id
+            }
+
+        img_str = create_map_visualization(player_id, platform_game_id, map_url, map_data)
         return {
             "map_image": img_str,
-            "platform_game_id": platform_game_id
+            "player_id": player_id,
+            "platform_game_id": platform_game_id,
+            "map_url": map_url,
+            "game_date": game_date.strftime("%Y-%m-%d") if game_date else None
         }
     except Exception as e:
         logger.error(f"Error in get_map_visualization: {str(e)}", exc_info=True)
         return {
             "error": str(e),
-            "platform_game_id": platform_game_id
+            "player_id": player_id
         }
-
-def get_map_data(platform_game_id):
-    # This function should return a dictionary with keys:
-    # 'xMultiplier', 'yMultiplier', 'xScalarToAdd', 'yScalarToAdd'
-    # The values should be strings that can be converted to Decimal
-    # For now, we'll return placeholder values. You should replace this
-    # with actual logic to fetch the correct map data for each game.
-    return {
-        'xMultiplier': '7.2e-05',
-        'yMultiplier': '-7.2e-05',
-        'xScalarToAdd': '0.454789',
-        'yScalarToAdd': '0.917752'
-    }
