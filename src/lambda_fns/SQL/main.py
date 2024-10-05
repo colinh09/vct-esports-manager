@@ -2,7 +2,8 @@ import json
 import logging
 from player_queries import get_player_info_by_handle, get_player_info_by_name
 from stat_queries import get_player_stats, get_player_best_agents, get_player_performance_trend, get_player_role_analysis
-from position_queries import get_map_visualization
+from get_last_game_map import get_map_visualization
+from get_last_tour_map import get_tournament_map_visualizations
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -52,6 +53,10 @@ def lambda_handler(event, context):
         elif function == 'get_map_visualization':
             player_id = parameters.get('player_id')
             result = get_map_visualization(player_id)
+        elif function == 'get_tournament_map_visualizations':
+            player_id = parameters.get('player_id')
+            event_type = parameters.get('event_type', 'both')
+            result = get_tournament_map_visualizations(player_id, event_type)
         else:
             raise ValueError(f"Unknown function: {function}")
         

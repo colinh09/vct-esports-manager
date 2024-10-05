@@ -22,14 +22,15 @@ def run_test(test_name, event):
         print("Error: Unexpected response format")
 
 def save_map_image(response_body):
-    if 'map_image' in response_body:
-        image_data = base64.b64decode(response_body['map_image'])
-        file_name = f"test_map_{response_body['platform_game_id']}.png"
-        with open(file_name, "wb") as f:
-            f.write(image_data)
-        print(f"Test image saved as {file_name}")
+    if 'maps' in response_body:
+        for map_url, map_data in response_body['maps'].items():
+            file_name = map_data['file_name']
+            if os.path.exists(file_name):
+                print(f"Map image saved as {file_name}")
+            else:
+                print(f"Error: Map image {file_name} was not saved")
     else:
-        print("Error: No map image in response")
+        print("Error: No map data in response")
 
 def test_all_functions():
     # Test get_player_info_by_handle
@@ -137,14 +138,32 @@ def test_all_functions():
     # })
 
     # Test get_map_visualization
-    run_test("Get map visualization", {
+    # run_test("Get map visualization", {
+    #     "actionGroup": "MapVisualizationGroup",
+    #     "function": "get_map_visualization",
+    #     "parameters": [
+    #         {
+    #             "name": "player_id",
+    #             "type": "string",
+    #             "value": "106229920360816436"
+    #         }
+    #     ],
+    #     "messageVersion": "1.0"
+    # })
+    # Test get_tournament_map_visualizations
+    run_test("Get tournament map visualizations", {
         "actionGroup": "MapVisualizationGroup",
-        "function": "get_map_visualization",
+        "function": "get_tournament_map_visualizations",
         "parameters": [
             {
                 "name": "player_id",
                 "type": "string",
-                "value": "106229920360816436"
+                "value": "106229920360816436"  # Replace with actual player ID if needed
+            },
+            {
+                "name": "event_type",
+                "type": "string",
+                "value": "kills"  # You can change this to "kills" or "deaths" if desired
             }
         ],
         "messageVersion": "1.0"
