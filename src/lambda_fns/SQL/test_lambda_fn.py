@@ -163,7 +163,7 @@ def test_all_functions():
             {
                 "name": "event_type",
                 "type": "string",
-                "value": "kills"  # You can change this to "kills" or "deaths" if desired
+                "value": "both"  # You can change this to "kills" or "deaths" if desired
             }
         ],
         "messageVersion": "1.0"

@@ -48,11 +48,13 @@ def get_map_data(map_url):
         for map_data in maps_data:
             if map_data['mapUrl'] == map_url:
                 return {
+                    'displayName': map_data['displayName'],
                     'displayIcon': map_data['displayIcon'],
                     'xMultiplier': str(map_data['xMultiplier']),
                     'yMultiplier': str(map_data['yMultiplier']),
                     'xScalarToAdd': str(map_data['xScalarToAdd']),
-                    'yScalarToAdd': str(map_data['yScalarToAdd'])
+                    'yScalarToAdd': str(map_data['yScalarToAdd']),
+                    'mapUrl': map_data['mapUrl']
                 }
 
         logger.warning(f"Map data not found for {map_url}")
@@ -161,6 +163,7 @@ def get_map_visualization(player_id):
             "player_id": player_id,
             "platform_game_id": platform_game_id,
             "map_url": map_url,
+            "map_name": map_data['displayName'],
             "game_date": game_date.strftime("%Y-%m-%d") if game_date else None
         }
     except Exception as e:
