@@ -37,7 +37,21 @@ def parse_configuration(config: Dict[str, Any], mappings: Dict[str, Dict[str, st
             'agentGuid': agent_guid
         }
     
-    return result, player_map
+    team_info = {}
+    for team in config.get('teams', []):
+        team_id = safe_get(team, 'teamId', 'value')
+        team_name = safe_get(team, 'name')
+        players_in_team = [safe_get(p, 'value') for p in team.get('playersInTeam', [])]
+        team_info[team_id] = {
+            'name': team_name,
+            'players': players_in_team
+        }
+    
+    result += "\nTeams:\n"
+    for team_id, team_data in team_info.items():
+        result += f"Team ID: {team_id}, Name: {team_data['name']}, Players: {', '.join(map(str, team_data['players']))}\n"
+    
+    return result, player_map, team_info
 
 def get_ability_name(agent_guid: str, ability_slot: str, mappings: Dict[str, Dict[str, str]]) -> str:
     slot_to_ability = {
@@ -50,8 +64,16 @@ def get_ability_name(agent_guid: str, ability_slot: str, mappings: Dict[str, Dic
     ability_key = f"{agent_guid}_{ability_type}".lower()
     return mappings['abilities'].get(ability_key, ability_slot)
 
-def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[str, Dict[str, str]], include_snapshots: bool, mappings: Dict[str, Dict[str, str]]) -> str:
-    if event_type == 'playerDied':
+def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[str, Dict[str, str]], include_snapshots: bool, mappings: Dict[str, Dict[str, str]], team_info: Dict[int, Dict[str, Any]]) -> str:
+    if event_type == 'roundStarted':
+        round_number = safe_get(event_data, 'roundNumber')
+        attacking_team_id = safe_get(event_data, 'spikeMode', 'attackingTeam', 'value')
+        defending_team_id = safe_get(event_data, 'spikeMode', 'defendingTeam', 'value')
+        attacking_team_name = team_info.get(attacking_team_id, {}).get('name', 'Unknown Team')
+        defending_team_name = team_info.get(defending_team_id, {}).get('name', 'Unknown Team')
+        return f"Round {round_number} started. Attacking Team: ID {attacking_team_id} ({attacking_team_name}), Defending Team: ID {defending_team_id} ({defending_team_name})"
+    
+    elif event_type == 'playerDied':
         killer_id = safe_get(event_data, 'killerId', 'value')
         victim_id = safe_get(event_data, 'deceasedId', 'value')
         killer = player_map.get(killer_id, {}).get('displayName', '[unknown]')
@@ -174,12 +196,12 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
         carrier = player_map.get(carrier_id, {}).get('displayName', '[unknown]')
         return f"Spike status: {status}, Carrier: {carrier}."
     
-    # New event handlers
     elif event_type == 'roundDecided':
         round_number = safe_get(event_data, 'result', 'roundNumber')
         winning_team_id = safe_get(event_data, 'result', 'winningTeam', 'value')
+        winning_team = team_info.get(winning_team_id, {}).get('name', f'Team ID {winning_team_id}')
         cause = safe_get(event_data, 'result', 'spikeModeResult', 'cause')
-        result = f"Round {round_number} decided. Winning team: {winning_team_id}, Cause: {cause}"
+        result = f"Round {round_number} decided. Winning team: {winning_team}, Cause: {cause}"
         return result
     
     elif event_type == 'spikePlantStarted':
@@ -208,12 +230,13 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
     
     elif event_type == 'gameDecided':
         winning_team_id = safe_get(event_data, 'winningTeam', 'value')
+        winning_team = team_info.get(winning_team_id, {}).get('name', f'Team ID {winning_team_id}')
         state = safe_get(event_data, 'state')
-        result = f"Game decided. Winning team: {winning_team_id}, State: {state}"
+        result = f"Game decided. Winning team: {winning_team}, State: {state}"
         return result
     
     else:
-        return None  # Return None for events we want to skip
+        return None
 
 def process_game_file(input_file: str, output_dir: str, include_snapshots: bool, mappings: Dict[str, Dict[str, str]]):
     with open(input_file, 'r') as f:
@@ -224,12 +247,13 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
     # Process configuration
     config_event = next((event for event in game_data if 'configuration' in event), None)
     if config_event:
-        config_info, player_map = parse_configuration(config_event['configuration'], mappings)
+        config_info, player_map, team_info = parse_configuration(config_event['configuration'], mappings)
         with open(os.path.join(output_dir, 'configuration.txt'), 'w') as f:
             f.write(config_info)
     else:
         print("Warning: No configuration event found.")
         player_map = {}
+        team_info = {}
     
     # Process rounds
     current_round = 0
@@ -237,20 +261,24 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
     
     for event in game_data:
         if 'roundStarted' in event:
+            if round_events:
+                with open(os.path.join(output_dir, f'round_{current_round}.txt'), 'w') as f:
+                    f.write('\n'.join(round_events))
             current_round = safe_get(event['roundStarted'], 'roundNumber')
             round_events = []
         
         wall_time = safe_get(event, 'metadata', 'wallTime')
         
         for event_type, event_data in event.items():
-            if event_type not in ['metadata', 'configuration', 'roundStarted', 'roundEnded', 'platformGameId', 'observerTarget']:
-                parsed_event = parse_event(event_type, event_data, player_map, include_snapshots, mappings)
+            if event_type not in ['metadata', 'configuration', 'roundEnded', 'platformGameId', 'observerTarget']:
+                parsed_event = parse_event(event_type, event_data, player_map, include_snapshots, mappings, team_info)
                 if parsed_event:
                     round_events.append(f"[{wall_time}] {parsed_event}")
-        
-        if 'roundEnded' in event:
-            with open(os.path.join(output_dir, f'round_{current_round}.txt'), 'w') as f:
-                f.write('\n'.join(round_events))
+    
+    # Write the last round events
+    if round_events:
+        with open(os.path.join(output_dir, f'round_{current_round}.txt'), 'w') as f:
+            f.write('\n'.join(round_events))
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
