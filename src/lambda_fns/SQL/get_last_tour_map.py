@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from db_connection import get_db_connection
 from get_last_game_map import get_map_data, transform_coordinates
 import seaborn as sns
+import colorsys
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -48,15 +49,18 @@ def get_tournament_map_visualizations(player_id, event_type='both'):
                 logger.warning(f"Map data not found for {map_url}")
                 continue
 
-            img = Image.open(io.BytesIO(requests.get(map_data['displayIcon']).content))
-            draw = ImageDraw.Draw(img)
+            img_attacking = Image.open(io.BytesIO(requests.get(map_data['displayIcon']).content))
+            img_defending = Image.open(io.BytesIO(requests.get(map_data['displayIcon']).content))
+            draw_attacking = ImageDraw.Draw(img_attacking)
+            draw_defending = ImageDraw.Draw(img_defending)
 
             for i, game in enumerate(map_games):
                 game['color'] = colors[i]
-                plot_game_events(draw, game, player_id, map_data, event_type)
+                game['attacker_kills'], game['defender_kills'], game['attacker_deaths'], game['defender_deaths'] = plot_game_events(draw_attacking, draw_defending, game, player_id, map_data, event_type)
 
             map_visualizations[map_url] = {
-                'image': img,
+                'image_attacking': img_attacking,
+                'image_defending': img_defending,
                 'games': map_games,
                 'display_name': map_data['displayName']
             }
@@ -73,18 +77,28 @@ def get_tournament_map_visualizations(player_id, event_type='both'):
         }
 
         for map_url, map_viz in map_visualizations.items():
-            img_with_legend = add_legend(map_viz['image'], map_viz['games'], event_type)
-            file_name = f"{player_id}_last_tournament/map_{tournament_info['tournament_id']}_{map_viz['display_name']}.png"
+            img_attacking_with_legend = add_legend(map_viz['image_attacking'], map_viz['games'], event_type, "Attacking")
+            img_defending_with_legend = add_legend(map_viz['image_defending'], map_viz['games'], event_type, "Defending")
             
-            img_buffer = io.BytesIO()
-            img_with_legend.save(img_buffer, format='PNG')
-            img_buffer.seek(0)
+            map_directory = f"{player_id}_last_tournament/{map_viz['display_name']}"
+            file_name_attacking = f"{map_directory}/attacking_{tournament_info['tournament_id']}.png"
+            file_name_defending = f"{map_directory}/defending_{tournament_info['tournament_id']}.png"
             
-            s3_url = upload_to_s3(file_name, img_buffer, 'image/png')
+            img_buffer_attacking = io.BytesIO()
+            img_attacking_with_legend.save(img_buffer_attacking, format='PNG')
+            img_buffer_attacking.seek(0)
             
-            if s3_url:
+            img_buffer_defending = io.BytesIO()
+            img_defending_with_legend.save(img_buffer_defending, format='PNG')
+            img_buffer_defending.seek(0)
+            
+            s3_url_attacking = upload_to_s3(file_name_attacking, img_buffer_attacking, 'image/png')
+            s3_url_defending = upload_to_s3(file_name_defending, img_buffer_defending, 'image/png')
+            
+            if s3_url_attacking and s3_url_defending:
                 result["maps"][map_viz['display_name']] = {
-                    "file_url": s3_url,
+                    "file_url_attacking": s3_url_attacking,
+                    "file_url_defending": s3_url_defending,
                     "map_url": map_url,
                     "games": [{
                         "match_id": game['match_id'],
@@ -93,11 +107,15 @@ def get_tournament_map_visualizations(player_id, event_type='both'):
                         "kills": game['kills'],
                         "deaths": game['deaths'],
                         "assists": game['assists'],
-                        "combat_score": game['combat_score']
+                        "combat_score": game['combat_score'],
+                        "attacker_kills": game['attacker_kills'],
+                        "defender_kills": game['defender_kills'],
+                        "attacker_deaths": game['attacker_deaths'],
+                        "defender_deaths": game['defender_deaths']
                     } for game in map_viz['games']]
                 }
             else:
-                logger.error(f"Failed to upload image to S3: {file_name}")
+                logger.error(f"Failed to upload images to S3 for map: {map_viz['display_name']}")
 
         cache_tournament_data(player_id, result)
 
@@ -106,6 +124,87 @@ def get_tournament_map_visualizations(player_id, event_type='both'):
     except Exception as e:
         logger.error(f"Error in get_tournament_map_visualizations: {str(e)}", exc_info=True)
         return {"error": str(e)}
+
+def plot_game_events(draw_attacking, draw_defending, game, player_id, map_data, event_type):
+    events = get_game_events(game['platform_game_id'], player_id, event_type)
+    image_width, image_height = draw_attacking.im.size
+    color = game['color']
+    
+    attacker_kills, defender_kills, attacker_deaths, defender_deaths = 0, 0, 0, 0
+    
+    for event in events:
+        deceased_x, deceased_y = transform_coordinates(event['deceased_x'], event['deceased_y'], map_data, image_width, image_height)
+        killer_x, killer_y = transform_coordinates(event['killer_x'], event['killer_y'], map_data, image_width, image_height)
+        
+        if all(coord is not None for coord in [killer_x, killer_y, deceased_x, deceased_y]):
+            if event['true_killer_id'] == player_id and (event_type in ['kills', 'both']):
+                if event['killer_is_attacking']:
+                    draw_attacking.ellipse((killer_x - 5, killer_y - 5, killer_x + 5, killer_y + 5), fill=color)
+                    draw_attacking.line((killer_x, killer_y, deceased_x, deceased_y), fill=color, width=1)
+                    draw_attacking.ellipse((deceased_x - 2, deceased_y - 2, deceased_x + 2, deceased_y + 2), fill=color)
+                    attacker_kills += 1
+                else:
+                    draw_defending.ellipse((killer_x - 5, killer_y - 5, killer_x + 5, killer_y + 5), fill=color)
+                    draw_defending.line((killer_x, killer_y, deceased_x, deceased_y), fill=color, width=1)
+                    draw_defending.ellipse((deceased_x - 2, deceased_y - 2, deceased_x + 2, deceased_y + 2), fill=color)
+                    defender_kills += 1
+            elif event['true_deceased_id'] == player_id and (event_type in ['deaths', 'both']):
+                if event['deceased_is_attacking']:
+                    draw_x(draw_attacking, deceased_x, deceased_y, 5, color)
+                    draw_attacking.line((killer_x, killer_y, deceased_x, deceased_y), fill=color, width=1)
+                    attacker_deaths += 1
+                else:
+                    draw_x(draw_defending, deceased_x, deceased_y, 5, color)
+                    draw_defending.line((killer_x, killer_y, deceased_x, deceased_y), fill=color, width=1)
+                    defender_deaths += 1
+    
+    return attacker_kills, defender_kills, attacker_deaths, defender_deaths
+
+def draw_x(draw, x, y, size, fill):
+    draw.line((x - size, y - size, x + size, y + size), fill=fill, width=2)
+    draw.line((x - size, y + size, x + size, y - size), fill=fill, width=2)
+
+def add_legend(img, games, event_type, side):
+    legend_width = 300
+    new_img = Image.new('RGB', (img.width + legend_width, img.height), color='white')
+    new_img.paste(img, (0, 0))
+    
+    draw = ImageDraw.Draw(new_img)
+    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
+    
+    x, y = img.width + 10, 10
+    draw.text((x, y), f"Legend ({side}):", fill="black", font=font)
+    y += 30
+    
+    for i, game in enumerate(games):
+        team1, team2 = get_team_acronyms(game['match_id'])
+        match_text = f"Game {i+1}: {team1} vs {team2}"
+        color = game['color']
+        draw.rectangle([x, y, x+20, y+20], fill=color, outline="black")
+        draw.text((x+30, y+3), match_text, fill="black", font=font)
+        y += 25
+        draw.text((x+30, y), f"KDA: {game['kills']}/{game['deaths']}/{game['assists']}", fill="black", font=font)
+        y += 20
+        draw.text((x+30, y), f"Combat Score: {game['combat_score']}", fill="black", font=font)
+        y += 30
+    
+    y += 10
+    icon_size = 10
+    if event_type in ['kills', 'both']:
+        draw.ellipse((x, y-icon_size//2, x+icon_size, y+icon_size//2), fill="black")
+        draw.text((x + 30, y - 7), f"Player's kills ({side})", fill="black", font=font)
+        y += 30
+    if event_type in ['deaths', 'both']:
+        draw_x(draw, x + icon_size//2, y, icon_size//2, "black")
+        draw.text((x + 30, y - 7), f"Player's deaths ({side})", fill="black", font=font)
+        y += 30
+    
+    # Add legend item for kill direction
+    draw.line((x, y, x + 20, y), fill="black", width=1)
+    draw.ellipse((x + 18, y - 2, x + 22, y + 2), fill="black")
+    draw.text((x + 30, y - 7), "Kill direction", fill="black", font=font)
+    
+    return new_img
 
 def get_cached_tournament_data(player_id):
     try:
@@ -200,7 +299,7 @@ def get_game_events(platform_game_id, player_id, event_type):
         query = """
             SELECT 
                 deceased_x, deceased_y, killer_x, killer_y,
-                true_deceased_id, true_killer_id
+                true_deceased_id, true_killer_id, killer_is_attacking, deceased_is_attacking
             FROM player_died
             WHERE platform_game_id = %s 
             AND (true_deceased_id = %s OR true_killer_id = %s)
@@ -221,70 +320,6 @@ def get_game_events(platform_game_id, player_id, event_type):
     except Exception as e:
         logger.error(f"Error in get_game_events: {str(e)}", exc_info=True)
         raise
-
-def plot_game_events(draw, game, player_id, map_data, event_type):
-    events = get_game_events(game['platform_game_id'], player_id, event_type)
-    image_width, image_height = draw.im.size
-    color = game['color']
-    
-    for event in events:
-        deceased_x, deceased_y = transform_coordinates(event['deceased_x'], event['deceased_y'], map_data, image_width, image_height)
-        killer_x, killer_y = transform_coordinates(event['killer_x'], event['killer_y'], map_data, image_width, image_height)
-        
-        if all(coord is not None for coord in [killer_x, killer_y, deceased_x, deceased_y]):
-            # Draw black line and dot for all events
-            draw.line((killer_x, killer_y, deceased_x, deceased_y), fill="black", width=1)
-            draw.ellipse((deceased_x - 2, deceased_y - 2, deceased_x + 2, deceased_y + 2), fill="black")
-
-            if event['true_killer_id'] == player_id and (event_type in ['kills', 'both']):
-                draw.ellipse((killer_x - 5, killer_y - 5, killer_x + 5, killer_y + 5), fill=color)
-            elif event['true_deceased_id'] == player_id and (event_type in ['deaths', 'both']):
-                draw_x(draw, killer_x, killer_y, 5, color)
-
-def draw_x(draw, x, y, size, fill):
-    draw.line((x - size, y - size, x + size, y + size), fill=fill, width=2)
-    draw.line((x - size, y + size, x + size, y - size), fill=fill, width=2)
-
-def add_legend(img, games, event_type):
-    legend_width = 300
-    new_img = Image.new('RGB', (img.width + legend_width, img.height), color='white')
-    new_img.paste(img, (0, 0))
-    
-    draw = ImageDraw.Draw(new_img)
-    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
-    
-    x, y = img.width + 10, 10
-    draw.text((x, y), "Legend:", fill="black", font=font)
-    y += 30  
-    
-    for i, game in enumerate(games):
-        team1, team2 = get_team_acronyms(game['match_id'])
-        match_text = f"Game {i+1}: {team1} vs {team2}"
-        color = game['color']
-        draw.rectangle([x, y, x+20, y+20], fill=color, outline="black")
-        draw.text((x+30, y+3), match_text, fill="black", font=font)
-        y += 25
-        draw.text((x+30, y), f"KDA: {game['kills']}/{game['deaths']}/{game['assists']}", fill="black", font=font)
-        y += 20
-        draw.text((x+30, y), f"Combat Score: {game['combat_score']}", fill="black", font=font)
-        y += 30 
-    
-    y += 10
-    icon_size = 10
-    if event_type in ['kills', 'both']:
-        draw.ellipse((x, y-icon_size//2, x+icon_size, y+icon_size//2), fill="black")
-        draw.text((x + 30, y - 7), "Player's kills", fill="black", font=font)
-        y += 30
-    if event_type in ['deaths', 'both']:
-        draw_x(draw, x + icon_size//2, y, icon_size//2, "black")
-        draw.text((x + 30, y - 7), "Player's deaths", fill="black", font=font)
-        y += 30  
-    
-    draw.line((x, y, x + 20, y), fill="black", width=1)
-    draw.ellipse((x + 18, y - 2, x + 22, y + 2), fill="black")
-    draw.text((x + 30, y - 7), "Event direction", fill="black", font=font)
-    
-    return new_img
 
 def get_team_acronyms(match_id):
     conn = get_db_connection()
@@ -312,8 +347,31 @@ def get_team_acronyms(match_id):
         return 'TBD', 'TBD'
 
 def get_distinct_colors(n):
-    palette = sns.color_palette("husl", n)
-    return [(int(r*255), int(g*255), int(b*255)) for r, g, b in palette]
+    hue_start = 0.0
+    hue_step = 0.618033988749895  # Golden ratio conjugate
+    saturation = 0.7
+    value = 0.95
+
+    colors = []
+    for i in range(n):
+        hue = (hue_start + i * hue_step) % 1.0
+        r, g, b = colorsys.hsv_to_rgb(hue, saturation, value)
+        colors.append((int(r*255), int(g*255), int(b*255)))
+
+    # Predefined colorblind-friendly palette
+    cb_friendly_palette = [
+        (0, 114, 178),   # Blue
+        (230, 159, 0),   # Orange
+        (0, 158, 115),   # Green
+        (204, 121, 167), # Purple
+        (213, 94, 0),    # Vermillion
+        (86, 180, 233),  # Sky Blue
+        (0, 158, 115),   # Bluish Green
+        (240, 228, 66),  # Yellow
+    ]
+
+    # Use the colorblind-friendly palette first, then fall back to generated colors
+    return cb_friendly_palette[:min(n, len(cb_friendly_palette))] + colors[:max(0, n - len(cb_friendly_palette))]
 
 def upload_to_s3(file_name, file_content, content_type):
     try:
@@ -327,5 +385,3 @@ def upload_to_s3(file_name, file_content, content_type):
     except ClientError as e:
         logger.error(f"Error uploading to S3: {str(e)}")
         return None
-
-# The main Lambda handler function would go here, calling get_tournament_map_visualizations
