@@ -33,137 +33,94 @@ def save_map_image(response_body):
         print("Error: No map data in response")
 
 def test_all_functions():
-    # Test get_player_info_by_handle
-    # run_test("Get player by handle", {
+    # Test get_tournament_map_visualizations
+    # run_test("Get tournament map visualizations", {
+    #     "actionGroup": "MapVisualizationGroup",
+    #     "function": "get_tournament_map_visualizations",
+    #     "parameters": [
+    #         {
+    #             "name": "player_id",
+    #             "type": "string",
+    #             "value": "106229920360816436"  # Replace with actual player ID if needed
+    #         },
+    #         {
+    #             "name": "event_type",
+    #             "type": "string",
+    #             "value": "both"  # You can change this to "kills" or "deaths" if desired
+    #         }
+    #     ],
+    #     "messageVersion": "1.0"
+    # })
+
+    # Test get_player_info with handle
+    # run_test("Get player info by handle", {
     #     "actionGroup": "PlayerInfoGroup",
-    #     "function": "get_player_info_by_handle",
+    #     "function": "get_player_info",
     #     "parameters": [
     #         {
     #             "name": "handle",
     #             "type": "string",
-    #             "value": "TenZ"
+    #             "value": "tezn"
     #         }
     #     ],
     #     "messageVersion": "1.0"
     # })
 
-    # # Test get_player_info_by_name
-    # run_test("Get player by name", {
+    # # Test get_player_info with first name and last name
+    # run_test("Get player info by name", {
     #     "actionGroup": "PlayerInfoGroup",
-    #     "function": "get_player_info_by_name",
+    #     "function": "get_player_info",
     #     "parameters": [
     #         {
     #             "name": "first_name",
     #             "type": "string",
-    #             "value": "Tyson"
+    #             "value": "tysno"
     #         },
     #         {
     #             "name": "last_name",
     #             "type": "string",
-    #             "value": "Ngo"
+    #             "value": "ngooo"
     #         }
     #     ],
     #     "messageVersion": "1.0"
     # })
 
-    # # Test get_player_stats
-    # run_test("Get player stats", {
+    # # Test get_top_agents_for_player
+    # run_test("Get top agents for player", {
     #     "actionGroup": "PlayerStatsGroup",
-    #     "function": "get_player_stats",
-    #     "parameters": [
-    #         {
-    #             "name": "player_id",
-    #             "type": "string",
-    #             "value": "106229920360816436"  # Replace with actual ID if known
-    #         },
-    #         {
-    #             "name": "tournament_id",
-    #             "type": "string",
-    #             "value": "111811151250338218"  # Replace with actual tournament ID if known
-    #         }
-    #     ],
-    #     "messageVersion": "1.0"
-    # })
-
-    # # Test get_player_best_agents
-    # run_test("Get player best agents", {
-    #     "actionGroup": "PlayerStatsGroup",
-    #     "function": "get_player_best_agents",
-    #     "parameters": [
-    #         {
-    #             "name": "player_id",
-    #             "type": "string",
-    #             "value": "106229920360816436"  # Replace with actual ID if known
-    #         }
-    #     ],
-    #     "messageVersion": "1.0"
-    # })
-
-    # # Test get_player_performance_trend
-    # run_test("Get player performance trend", {
-    #     "actionGroup": "PlayerStatsGroup",
-    #     "function": "get_player_performance_trend",
-    #     "parameters": [
-    #         {
-    #             "name": "player_id",
-    #             "type": "string",
-    #             "value": "106229920360816436"  # Replace with actual ID if known
-    #         },
-    #         {
-    #             "name": "start_date",
-    #             "type": "string",
-    #             "value": "2023-01-01"
-    #         },
-    #         {
-    #             "name": "end_date",
-    #             "type": "string",
-    #             "value": "2023-12-31"
-    #         }
-    #     ],
-    #     "messageVersion": "1.0"
-    # })
-
-    # # Test get_player_role_analysis
-    # run_test("Get player role analysis", {
-    #     "actionGroup": "PlayerStatsGroup",
-    #     "function": "get_player_role_analysis",
-    #     "parameters": [
-    #         {
-    #             "name": "player_id",
-    #             "type": "string",
-    #             "value": "106229920360816436"  # Replace with actual ID if known
-    #         }
-    #     ],
-    #     "messageVersion": "1.0"
-    # })
-
-    # Test get_map_visualization
-    # run_test("Get map visualization", {
-    #     "actionGroup": "MapVisualizationGroup",
-    #     "function": "get_map_visualization",
+    #     "function": "get_top_agents_for_player",
     #     "parameters": [
     #         {
     #             "name": "player_id",
     #             "type": "string",
     #             "value": "106229920360816436"
+    #         },
+    #         {
+    #             "name": "limit",
+    #             "type": "number",
+    #             "value": 5
     #         }
     #     ],
     #     "messageVersion": "1.0"
     # })
-    # Test get_tournament_map_visualizations
-    run_test("Get tournament map visualizations", {
-        "actionGroup": "MapVisualizationGroup",
-        "function": "get_tournament_map_visualizations",
+
+    run_test("Get top players by role", {
+        "actionGroup": "PlayerStatsGroup",
+        "function": "get_top_players_by_role",
         "parameters": [
             {
-                "name": "player_id",
+                "name": "role",
                 "type": "string",
-                "value": "106229920360816436"  # Replace with actual player ID if needed
+                "value": "duelist"
             },
             {
-                "name": "event_type",
+                "name": "tournament_types",
                 "type": "string",
-                "value": "both"  # You can change this to "kills" or "deaths" if desired
+                "value": json.dumps({
+                    "vct-challengers": 2,
+                    "game-changers": 1,
+                    "vct-international": 3
+                })
             }
         ],
         "messageVersion": "1.0"
