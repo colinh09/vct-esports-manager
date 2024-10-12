@@ -6,7 +6,8 @@ import sys
 
 # Adjust imports as needed
 sys.path.append('..')
-from agents.sql_agent import SqlAgent
+# from agents.sql_agent import SqlAgent  # Commented out SQL agent import
+from agents.parser_agent import VctInputParserAgent  # Import the new parser agent
 from utils.aws_utils import check_aws_permissions
 
 # Configure logging
@@ -21,21 +22,23 @@ logger.addHandler(logging_handler)
 # Streamlit app
 st.title("Valorant Esports Manager Chatbot")
 
-# Initialize SqlAgent and get agent details
+# Initialize VctInputParserAgent and get agent details
 @st.cache_resource
 def initialize_agent():
     check_aws_permissions()
-    sql_agent = SqlAgent()
-    agent_id, agent_alias_id = sql_agent.get_or_create_agent()
+    # sql_agent = SqlAgent()  # Commented out SQL agent initialization
+    parser_agent = VctInputParserAgent()  # Initialize the parser agent
+    agent_id, agent_alias_id = parser_agent.get_agent()  # Use get_agent() for existing agent
     if not agent_id or not agent_alias_id:
-        st.error("Failed to get or create agent. Please check your AWS permissions and try again.")
+        st.error("Failed to get agent. Please check your AWS permissions and try again.")
         return None, None, None
-    sql_agent.create_agent_action_group(agent_id)
-    sql_agent.update_agent_action_group(agent_id)
-    sql_agent.prepare_agent(agent_id)
-    return sql_agent, agent_id, agent_alias_id
+    # Commented out SQL agent-specific operations
+    # sql_agent.create_agent_action_group(agent_id)
+    # sql_agent.update_agent_action_group(agent_id)
+    # sql_agent.prepare_agent(agent_id)
+    return parser_agent, agent_id, agent_alias_id
 
-sql_agent, agent_id, agent_alias_id = initialize_agent()
+parser_agent, agent_id, agent_alias_id = initialize_agent()
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -52,12 +55,12 @@ if prompt := st.chat_input("Your prompt:"):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    if sql_agent and agent_id and agent_alias_id:
+    if parser_agent and agent_id and agent_alias_id:
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             full_response = ""
             try:
-                response = sql_agent.invoke_agent(agent_id, agent_alias_id, prompt)
+                response = parser_agent.invoke_agent(prompt, agent_alias_id)
                 for event in response['completion']:
                     if 'chunk' in event:
                         chunk = event['chunk']['bytes'].decode('utf-8')
