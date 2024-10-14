@@ -10,7 +10,6 @@ from botocore.exceptions import ClientError
 from PIL import Image, ImageDraw, ImageFont
 from db_connection import get_db_connection
 from get_last_game_map import get_map_data, transform_coordinates
-import seaborn as sns
 import colorsys
 
 logger = logging.getLogger()

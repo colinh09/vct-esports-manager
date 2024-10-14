@@ -111,16 +111,12 @@ def test_all_functions():
             {
                 "name": "role",
                 "type": "string",
-                "value": "duelist"
+                "value": "controller"
             },
             {
-                "name": "tournament_types",
-                "type": "string",
-                "value": json.dumps({
-                    "vct-challengers": 2,
-                    "game-changers": 1,
-                    "vct-international": 3
-                })
+            "name": "vct_challenger",
+            "type": "number",
+            "value": 3
             }
         ],
         "messageVersion": "1.0"
