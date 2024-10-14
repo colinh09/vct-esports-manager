@@ -8,6 +8,7 @@ from multi_agent_orchestrator.classifiers import BedrockClassifier, BedrockClass
 
 from input_parser_agent import create_vct_input_parser
 from sql_agent import create_valorant_agent
+from final_agent import create_vct_final_agent
 
 # Create a custom Bedrock classifier
 custom_bedrock_classifier = BedrockClassifier(BedrockClassifierOptions(
@@ -38,19 +39,20 @@ orchestrator = MultiAgentOrchestrator(
 # Create the agents
 vct_input_parser = create_vct_input_parser()
 valorant_agent = create_valorant_agent()
+final_agent = create_vct_final_agent()
 
 # Create the ChainAgent
 chain_options = ChainAgentOptions(
     name='VCTChainAgent',
     description='A chain of agents for processing Valorant esports queries',
-    agents=[vct_input_parser, valorant_agent],
+    agents=[vct_input_parser, valorant_agent, final_agent],
     default_output='The chain processing encountered an issue.',
     save_chat=True
 )
 chain_agent = ChainAgent(chain_options)
 
 # Add the chain agent to the orchestrator
-orchestrator.add_agent(vct_input_parser)
+orchestrator.add_agent(chain_agent)
 
 async def handle_request(_orchestrator: MultiAgentOrchestrator, _user_input: str, _user_id: str, _session_id: str):
     response: AgentResponse = await _orchestrator.route_request(_user_input, _user_id, _session_id)

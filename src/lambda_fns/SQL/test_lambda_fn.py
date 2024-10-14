@@ -111,10 +111,10 @@ def test_all_functions():
             {
                 "name": "role",
                 "type": "string",
-                "value": "controller"
+                "value": "igl"
             },
             {
-            "name": "vct_challenger",
+            "name": "game_changers",
             "type": "number",
             "value": 3
             }

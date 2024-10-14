@@ -14,8 +14,7 @@ def get_top_players(cur, role, tournament_type, count):
             p.{role}_percentage as role_percentage,
             t.name as team_name,
             l.region,
-            SUM(CASE WHEN pm.agent_role = %s THEN 1 ELSE 0 END) as role_games,
-            COUNT(DISTINCT pm.platform_game_id) as total_games,
+            COUNT(DISTINCT pm.platform_game_id) as role_games,
             SUM(pm.kills) as total_kills, 
             SUM(pm.deaths) as total_deaths, 
             SUM(pm.assists) as total_assists
@@ -25,7 +24,8 @@ def get_top_players(cur, role, tournament_type, count):
         JOIN teams t ON p.home_team_id = t.team_id
         JOIN leagues l ON t.home_league_id = l.league_id
         WHERE p.{role}_percentage > %s
-           AND gm.tournament_type = %s
+        AND gm.tournament_type = %s
+        AND pm.agent_role = %s
         GROUP BY p.player_id, p.handle, p.first_name, p.last_name, p.{role}_percentage, t.name, l.region
     )
     SELECT 
@@ -37,11 +37,9 @@ def get_top_players(cur, role, tournament_type, count):
         team_name,
         region,
         role_games,
-        total_games,
         total_kills, 
         total_deaths, 
         total_assists,
-        CAST(role_games AS FLOAT) / NULLIF(total_games, 0) * 100 as actual_role_percentage,
         CASE 
             WHEN total_kills + total_assists > 0 AND total_deaths > 0
             THEN CAST((CAST(total_kills + total_assists AS FLOAT) / total_deaths) * 100 AS INTEGER) / 100.0
@@ -80,7 +78,7 @@ def get_top_igls(cur, tournament_type, count):
         JOIN teams t ON p.home_team_id = t.team_id
         JOIN leagues l ON t.home_league_id = l.league_id
         WHERE p.is_team_leader = true
-           AND gm.tournament_type = %s
+        AND gm.tournament_type = %s
         GROUP BY p.player_id, p.handle, p.first_name, p.last_name, t.name, l.region
     )
     SELECT 
