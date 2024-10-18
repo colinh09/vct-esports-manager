@@ -17,7 +17,7 @@ custom_bedrock_classifier = BedrockClassifier(BedrockClassifierOptions(
     inference_config={
         'maxTokens': 500,
         'temperature': 0.7,
-        'topP': 0.9
+        'topP': 0.9,
     }
 ))
 

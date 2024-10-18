@@ -12,7 +12,8 @@ def create_vct_input_parser():
             'temperature': 0.1,
             'topP': 0.9,
             'stopSequences': ['Human:', 'AI:']
-        }
+        },
+        save_chat = False
     ))
 
     vct_input_parser.set_system_prompt(
