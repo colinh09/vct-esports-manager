@@ -1,0 +1,605 @@
+{
+  "agents": [
+    {
+      "name": "Jett",
+      "abilities": [
+        {
+          "ability": "Cloudburst",
+          "dealsDamage": false,
+          "duration": 2.5
+        },
+        {
+          "ability": "Updraft",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Tailwind",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Blade Storm",
+          "dealsDamage": true,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "name": "Phoenix",
+      "abilities": [
+        {
+          "ability": "Blaze",
+          "dealsDamage": true,
+          "duration": 8
+        },
+        {
+          "ability": "Curveball",
+          "dealsDamage": false,
+          "duration": 1.5
+        },
+        {
+          "ability": "Hot Hands",
+          "dealsDamage": true,
+          "duration": 3.25
+        },
+        {
+          "ability": "Run It Back",
+          "dealsDamage": false,
+          "duration": 10
+        }
+      ]
+    },
+    {
+      "name": "Sage",
+      "abilities": [
+        {
+          "ability": "Barrier Orb",
+          "dealsDamage": false,
+          "duration": 40
+        },
+        {
+          "ability": "Slow Orb",
+          "dealsDamage": false,
+          "duration": 7
+        },
+        {
+          "ability": "Healing Orb",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Resurrection",
+          "dealsDamage": false,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "name": "Brimstone",
+      "abilities": [
+        {
+          "ability": "Incendiary",
+          "dealsDamage": true,
+          "duration": 7
+        },
+        {
+          "ability": "Stim Beacon",
+          "dealsDamage": false,
+          "duration": 12
+        },
+        {
+          "ability": "Sky Smoke",
+          "dealsDamage": false,
+          "duration": 19.25
+        },
+        {
+          "ability": "Orbital Strike",
+          "dealsDamage": true,
+          "duration": 3
+        }
+      ]
+    },
+    {
+      "name": "Reyna",
+      "abilities": [
+        {
+          "ability": "Leer",
+          "dealsDamage": false,
+          "duration": 1.6
+        },
+        {
+          "ability": "Devour",
+          "dealsDamage": false,
+          "duration": 2
+        },
+        {
+          "ability": "Dismiss",
+          "dealsDamage": false,
+          "duration": 1.5
+        },
+        {
+          "ability": "Empress",
+          "dealsDamage": false,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "name": "Viper",
+      "abilities": [
+        {
+          "ability": "Snake Bite",
+          "dealsDamage": true,
+          "duration": 6.5
+        },
+        {
+          "ability": "Poison Cloud",
+          "dealsDamage": false,
+          "duration": 12
+        },
+        {
+          "ability": "Toxic Screen",
+          "dealsDamage": false,
+          "duration": 12
+        },
+        {
+          "ability": "Viper's Pit",
+          "dealsDamage": false,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "name": "Sova",
+      "abilities": [
+        {
+          "ability": "Shock Bolt",
+          "dealsDamage": true,
+          "duration": 0
+        },
+        {
+          "ability": "Owl Drone",
+          "dealsDamage": false,
+          "duration": 7
+        },
+        {
+          "ability": "Recon Bolt",
+          "dealsDamage": false,
+          "duration": 3.2
+        },
+        {
+          "ability": "Hunter's Fury",
+          "dealsDamage": true,
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "name": "Killjoy",
+      "abilities": [
+        {
+          "ability": "Nanoswarm",
+          "dealsDamage": true,
+          "duration": 4
+        },
+        {
+          "ability": "Alarmbot",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Turret",
+          "dealsDamage": true,
+          "duration": 0
+        },
+        {
+          "ability": "Lockdown",
+          "dealsDamage": false,
+          "duration": 13
+        }
+      ]
+    },
+    {
+      "name": "Raze",
+      "abilities": [
+        {
+          "ability": "Boom Bot",
+          "dealsDamage": true,
+          "duration": 5
+        },
+        {
+          "ability": "Blast Pack",
+          "dealsDamage": true,
+          "duration": 0
+        },
+        {
+          "ability": "Paint Shells",
+          "dealsDamage": true,
+          "duration": 0
+        },
+        {
+          "ability": "Showstopper",
+          "dealsDamage": true,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "name": "Omen",
+      "abilities": [
+        {
+          "ability": "Shrouded Step",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Paranoia",
+          "dealsDamage": false,
+          "duration": 2
+        },
+        {
+          "ability": "Dark Cover",
+          "dealsDamage": false,
+          "duration": 15
+        },
+        {
+          "ability": "From the Shadows",
+          "dealsDamage": false,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "name": "Skye",
+      "abilities": [
+        {
+          "ability": "Regrowth",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Trailblazer",
+          "dealsDamage": true,
+          "duration": 6
+        },
+        {
+          "ability": "Guiding Light",
+          "dealsDamage": false,
+          "duration": 2
+        },
+        {
+          "ability": "Seekers",
+          "dealsDamage": false,
+          "duration": 15
+        }
+      ]
+    },
+    {
+      "name": "Astra",
+      "abilities": [
+        {
+          "ability": "Gravity Well",
+          "dealsDamage": false,
+          "duration": 2
+        },
+        {
+          "ability": "Nova Pulse",
+          "dealsDamage": false,
+          "duration": 1
+        },
+        {
+          "ability": "Nebula",
+          "dealsDamage": false,
+          "duration": 14.25
+        },
+        {
+          "ability": "Cosmic Divide",
+          "dealsDamage": false,
+          "duration": 25
+        }
+      ]
+    },
+    {
+      "name": "KAY/O",
+      "abilities": [
+        {
+          "ability": "FRAG/ment",
+          "dealsDamage": true,
+          "duration": 4
+        },
+        {
+          "ability": "FLASH/drive",
+          "dealsDamage": false,
+          "duration": 1.6
+        },
+        {
+          "ability": "ZERO/point",
+          "dealsDamage": false,
+          "duration": 8
+        },
+        {
+          "ability": "NULL/cmd",
+          "dealsDamage": false,
+          "duration": 12
+        }
+      ]
+    },
+    {
+      "name": "Chamber",
+      "abilities": [
+        {
+          "ability": "Trademark",
+          "dealsDamage": false,
+          "duration": 4
+        },
+        {
+          "ability": "Headhunter",
+          "dealsDamage": true,
+          "duration": 0
+        },
+        {
+          "ability": "Rendezvous",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Tour de Force",
+          "dealsDamage": true,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "name": "Neon",
+      "abilities": [
+        {
+          "ability": "Relay Bolt",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "High Gear",
+          "dealsDamage": false,
+          "duration": 10
+        },
+        {
+          "ability": "Fast Lane",
+          "dealsDamage": false,
+          "duration": 4
+        },
+        {
+          "ability": "Overdrive",
+          "dealsDamage": true,
+          "duration": 20
+        }
+      ]
+    },
+    {
+      "name": "Fade",
+      "abilities": [
+        {
+          "ability": "Prowler",
+          "dealsDamage": false,
+          "duration": 2.5
+        },
+        {
+          "ability": "Seize",
+          "dealsDamage": false,
+          "duration": 4.5
+        },
+        {
+          "ability": "Haunt",
+          "dealsDamage": false,
+          "duration": 2
+        },
+        {
+          "ability": "Nightfall",
+          "dealsDamage": false,
+          "duration": 12
+        }
+      ]
+    },
+    {
+      "name": "Gekko",
+      "abilities": [
+        {
+          "ability": "Mosh Pit",
+          "dealsDamage": true,
+          "duration": 4
+        },
+        {
+          "ability": "Dizzy",
+          "dealsDamage": false,
+          "duration": 2.5
+        },
+        {
+          "ability": "Wingman",
+          "dealsDamage": false,
+          "duration": 10
+        },
+        {
+          "ability": "Thrash",
+          "dealsDamage": false,
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "name": "Deadlock",
+      "abilities": [
+        {
+          "ability": "GravNet",
+          "dealsDamage": false,
+          "duration": 5
+        },
+        {
+          "ability": "Sonic Sensor",
+          "dealsDamage": false,
+          "duration": 3.5
+        },
+        {
+          "ability": "Barrier Mesh",
+          "dealsDamage": false,
+          "duration": 30
+        },
+        {
+          "ability": "Annihilation",
+          "dealsDamage": true,
+          "duration": 7
+        }
+      ]
+    },
+    {
+    "name": "Yoru",
+    "abilities": [
+      {
+        "ability": "Fakeout",
+        "dealsDamage": false,
+        "duration": 10
+      },
+      {
+        "ability": "Blindside",
+        "dealsDamage": false,
+        "duration": 1.75
+      },
+      {
+        "ability": "Gatecrash",
+        "dealsDamage": false,
+        "duration": 30
+      },
+      {
+        "ability": "Dimensional Drift",
+        "dealsDamage": false,
+        "duration": 12
+        }
+      ]
+    },
+    {
+      "name": "Clove",
+      "abilities": [
+        {
+          "ability": "Pick-Me-Up",
+          "dealsDamage": false,
+          "duration": 8
+        },
+        {
+          "ability": "Meddle",
+          "dealsDamage": false,
+          "duration": 5
+        },
+        {
+          "ability": "Ruse",
+          "dealsDamage": false,
+          "duration": 13.5
+        },
+        {
+          "ability": "Not Dead Yet",
+          "dealsDamage": false,
+          "duration": 12
+        }
+      ]
+    },
+    {
+      "name": "Iso",
+      "abilities": [
+        {
+          "ability": "Undercut",
+          "dealsDamage": false
+          "duration": 4
+        },
+        {
+          "ability": "Double Tap",
+          "dealsDamage": true,
+          "duration": 12
+        },
+        {
+          "ability": "Contingency",
+          "dealsDamage": false,
+          "duration": 4.6
+        },
+        {
+          "ability": "Kill Contract",
+          "dealsDamage": false,
+          "duration": 13
+        }
+      ]
+    },
+    {
+      "name": "Harbor",
+      "abilities": [
+        {
+          "ability": "Cascade",
+          "dealsDamage": false,
+          "duration": 7
+        },
+        {
+          "ability": "Cove",
+          "dealsDamage": false,
+          "duration": 15
+        },
+        {
+          "ability": "High Tide",
+          "dealsDamage": false,
+          "duration": 15
+        },
+        {
+          "ability": "Reckoning",
+          "dealsDamage": false,
+          "duration": 9
+        }
+      ]
+    },
+    {
+      "name": "Breach",
+      "abilities": [
+        {
+          "ability": "Aftershock",
+          "dealsDamage": true,
+          "duration": 2.2
+        },
+        {
+          "ability": "Flashpoint",
+          "dealsDamage": false,
+          "duration": 2
+        },
+        {
+          "ability": "Fault Line",
+          "dealsDamage": false,
+          "duration": 3.5
+        },
+        {
+          "ability": "Rolling Thunder",
+          "dealsDamage": false,
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "name": "Cypher",
+      "abilities": [
+        {
+          "ability": "Trapwire",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Cyber Cage",
+          "dealsDamage": false,
+          "duration": 7.25
+        },
+        {
+          "ability": "Spycam",
+          "dealsDamage": false,
+          "duration": 0
+        },
+        {
+          "ability": "Neural Theft",
+          "dealsDamage": false,
+          "duration": 4
+        }
+      ]
+    }
+  ]
+}
+
