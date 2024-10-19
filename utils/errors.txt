@@ -1,4 +1,0 @@
-Error updating player_mapping: column "agent_name" of relation "player_mapping" does not exist
-LINE 3:                         SET agent_name = 'Sova', agent_role ...
-                                    ^
-

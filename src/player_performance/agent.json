@@ -6,24 +6,30 @@
         {
           "ability": "Cloudburst",
           "dealsDamage": false,
-          "duration": 2.5
+          "duration": 2.5,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Updraft",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_1"
         },
         {
           "ability": "Tailwind",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_2"
         },
         {
           "ability": "Blade Storm",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "add6443a-41bd-e414-f6ad-e58d267f4e95",
+      "role": "Duelist"
     },
     {
       "name": "Phoenix",
@@ -31,24 +37,30 @@
         {
           "ability": "Blaze",
           "dealsDamage": true,
-          "duration": 8
+          "duration": 8,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Curveball",
           "dealsDamage": false,
-          "duration": 1.5
+          "duration": 1.5,
+          "slot": "ability_1"
         },
         {
           "ability": "Hot Hands",
           "dealsDamage": true,
-          "duration": 3.25
+          "duration": 3.25,
+          "slot": "ability_2"
         },
         {
           "ability": "Run It Back",
           "dealsDamage": false,
-          "duration": 10
+          "duration": 10,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "eb93336a-449b-9c1b-0a54-a891f7921d69",
+      "role": "Duelist"
     },
     {
       "name": "Sage",
@@ -56,24 +68,30 @@
         {
           "ability": "Barrier Orb",
           "dealsDamage": false,
-          "duration": 40
+          "duration": 40,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Slow Orb",
           "dealsDamage": false,
-          "duration": 7
+          "duration": 7,
+          "slot": "ability_1"
         },
         {
           "ability": "Healing Orb",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_2"
         },
         {
           "ability": "Resurrection",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "569fdd95-4d10-43ab-ca70-79becc718b46",
+      "role": "Sentinel"
     },
     {
       "name": "Brimstone",
@@ -81,24 +99,30 @@
         {
           "ability": "Incendiary",
           "dealsDamage": true,
-          "duration": 7
+          "duration": 7,
+          "slot": "ability_1"
         },
         {
           "ability": "Stim Beacon",
           "dealsDamage": false,
-          "duration": 12
+          "duration": 12,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Sky Smoke",
           "dealsDamage": false,
-          "duration": 19.25
+          "duration": 19.25,
+          "slot": "ability_2"
         },
         {
           "ability": "Orbital Strike",
           "dealsDamage": true,
-          "duration": 3
+          "duration": 3,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "9f0d8ba9-4140-b941-57d3-a7ad57c6b417",
+      "role": "Controller"
     },
     {
       "name": "Reyna",
@@ -106,24 +130,30 @@
         {
           "ability": "Leer",
           "dealsDamage": false,
-          "duration": 1.6
+          "duration": 1.6,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Devour",
           "dealsDamage": false,
-          "duration": 2
+          "duration": 2,
+          "slot": "ability_1"
         },
         {
           "ability": "Dismiss",
           "dealsDamage": false,
-          "duration": 1.5
+          "duration": 1.5,
+          "slot": "ability_2"
         },
         {
           "ability": "Empress",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
+      "role": "Duelist"
     },
     {
       "name": "Viper",
@@ -131,24 +161,30 @@
         {
           "ability": "Snake Bite",
           "dealsDamage": true,
-          "duration": 6.5
+          "duration": 6.5,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Poison Cloud",
           "dealsDamage": false,
-          "duration": 12
+          "duration": 12,
+          "slot": "ability_1"
         },
         {
           "ability": "Toxic Screen",
           "dealsDamage": false,
-          "duration": 12
+          "duration": 12,
+          "slot": "ability_2"
         },
         {
           "ability": "Viper's Pit",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "707eab51-4836-f488-046a-cda6bf494859",
+      "role": "Controller"
     },
     {
       "name": "Sova",
@@ -156,24 +192,30 @@
         {
           "ability": "Shock Bolt",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_1"
         },
         {
           "ability": "Owl Drone",
           "dealsDamage": false,
-          "duration": 7
+          "duration": 7,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Recon Bolt",
           "dealsDamage": false,
-          "duration": 3.2
+          "duration": 3.2,
+          "slot": "ability_2"
         },
         {
           "ability": "Hunter's Fury",
           "dealsDamage": true,
-          "duration": 6
+          "duration": 6,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "320b2a48-4d9b-a075-30f1-1f93a9b638fa",
+      "role": "Initiator"
     },
     {
       "name": "Killjoy",
@@ -181,24 +223,30 @@
         {
           "ability": "Nanoswarm",
           "dealsDamage": true,
-          "duration": 4
+          "duration": 4,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Alarmbot",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_1"
         },
         {
           "ability": "Turret",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_2"
         },
         {
           "ability": "Lockdown",
           "dealsDamage": false,
-          "duration": 13
+          "duration": 13,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "1e58de9c-4950-5125-93e9-a0aee9f98746",
+      "role": "Sentinel"
     },
     {
       "name": "Raze",
@@ -206,24 +254,30 @@
         {
           "ability": "Boom Bot",
           "dealsDamage": true,
-          "duration": 5
+          "duration": 5,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Blast Pack",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_1"
         },
         {
           "ability": "Paint Shells",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_2"
         },
         {
           "ability": "Showstopper",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
+      "role": "Duelist"
     },
     {
       "name": "Omen",
@@ -231,24 +285,30 @@
         {
           "ability": "Shrouded Step",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Paranoia",
           "dealsDamage": false,
-          "duration": 2
+          "duration": 2,
+          "slot": "ability_1"
         },
         {
           "ability": "Dark Cover",
           "dealsDamage": false,
-          "duration": 15
+          "duration": 15,
+          "slot": "ability_2"
         },
         {
           "ability": "From the Shadows",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "8e253930-4c05-31dd-1b6c-968525494517",
+      "role": "Controller"
     },
     {
       "name": "Skye",
@@ -256,24 +316,30 @@
         {
           "ability": "Regrowth",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Trailblazer",
           "dealsDamage": true,
-          "duration": 6
+          "duration": 6,
+          "slot": "ability_1"
         },
         {
           "ability": "Guiding Light",
           "dealsDamage": false,
-          "duration": 2
+          "duration": 2,
+          "slot": "ability_2"
         },
         {
           "ability": "Seekers",
           "dealsDamage": false,
-          "duration": 15
+          "duration": 15,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "6f2a04ca-43e0-be17-7f36-b3908627744d",
+      "role": "Initiator"
     },
     {
       "name": "Astra",
@@ -281,24 +347,30 @@
         {
           "ability": "Gravity Well",
           "dealsDamage": false,
-          "duration": 2
+          "duration": 2,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Nova Pulse",
           "dealsDamage": false,
-          "duration": 1
+          "duration": 1,
+          "slot": "ability_1"
         },
         {
           "ability": "Nebula",
           "dealsDamage": false,
-          "duration": 14.25
+          "duration": 14.25,
+          "slot": "ability_2"
         },
         {
           "ability": "Cosmic Divide",
           "dealsDamage": false,
-          "duration": 25
+          "duration": 25,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
+      "role": "Controller"
     },
     {
       "name": "KAY/O",
@@ -306,24 +378,30 @@
         {
           "ability": "FRAG/ment",
           "dealsDamage": true,
-          "duration": 4
+          "duration": 4,
+          "slot": "grenade_ability"
         },
         {
           "ability": "FLASH/drive",
           "dealsDamage": false,
-          "duration": 1.6
+          "duration": 1.6,
+          "slot": "ability_1"
         },
         {
           "ability": "ZERO/point",
           "dealsDamage": false,
-          "duration": 8
+          "duration": 8,
+          "slot": "ability_2"
         },
         {
           "ability": "NULL/cmd",
           "dealsDamage": false,
-          "duration": 12
+          "duration": 12,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "601dbbe7-43ce-be57-2a40-4abd24953621",
+      "role": "Initiator"
     },
     {
       "name": "Chamber",
@@ -331,24 +409,30 @@
         {
           "ability": "Trademark",
           "dealsDamage": false,
-          "duration": 4
+          "duration": 4,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Headhunter",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_1"
         },
         {
           "ability": "Rendezvous",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_2"
         },
         {
           "ability": "Tour de Force",
           "dealsDamage": true,
-          "duration": 0
+          "duration": 0,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "22697a3d-45bf-8dd7-4fec-84a9e28c69d7",
+      "role": "Sentinel"
     },
     {
       "name": "Neon",
@@ -356,24 +440,30 @@
         {
           "ability": "Relay Bolt",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_1"
         },
         {
           "ability": "High Gear",
           "dealsDamage": false,
-          "duration": 10
+          "duration": 10,
+          "slot": "ability_2"
         },
         {
           "ability": "Fast Lane",
           "dealsDamage": false,
-          "duration": 4
+          "duration": 4,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Overdrive",
           "dealsDamage": true,
-          "duration": 20
+          "duration": 20,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "bb2a4828-46eb-8cd1-e765-15848195d751",
+      "role": "Duelist"
     },
     {
       "name": "Fade",
@@ -381,24 +471,30 @@
         {
           "ability": "Prowler",
           "dealsDamage": false,
-          "duration": 2.5
+          "duration": 2.5,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Seize",
           "dealsDamage": false,
-          "duration": 4.5
+          "duration": 4.5,
+          "slot": "ability_1"
         },
         {
           "ability": "Haunt",
           "dealsDamage": false,
-          "duration": 2
+          "duration": 2,
+          "slot": "ability_2"
         },
         {
           "ability": "Nightfall",
           "dealsDamage": false,
-          "duration": 12
+          "duration": 12,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "dade69b4-4f5a-8528-247b-219e5a1facd6",
+      "role": "Initiator"
     },
     {
       "name": "Gekko",
@@ -406,24 +502,30 @@
         {
           "ability": "Mosh Pit",
           "dealsDamage": true,
-          "duration": 4
+          "duration": 4,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Dizzy",
           "dealsDamage": false,
-          "duration": 2.5
+          "duration": 2.5,
+          "slot": "ability_2"
         },
         {
           "ability": "Wingman",
           "dealsDamage": false,
-          "duration": 10
+          "duration": 10,
+          "slot": "ability_1"
         },
         {
           "ability": "Thrash",
           "dealsDamage": false,
-          "duration": 6
+          "duration": 6,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "e370fa57-4757-3604-3648-499e1f642d3f",
+      "role": "Initiator"
     },
     {
       "name": "Deadlock",
@@ -431,49 +533,61 @@
         {
           "ability": "GravNet",
           "dealsDamage": false,
-          "duration": 5
+          "duration": 5,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Sonic Sensor",
           "dealsDamage": false,
-          "duration": 3.5
+          "duration": 3.5,
+          "slot": "ability_1"
         },
         {
           "ability": "Barrier Mesh",
           "dealsDamage": false,
-          "duration": 30
+          "duration": 30,
+          "slot": "ability_2"
         },
         {
           "ability": "Annihilation",
           "dealsDamage": true,
-          "duration": 7
+          "duration": 7,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "cc8b64c8-4b25-4ff9-6e7f-37b4da43d235",
+      "role": "Sentinel"
     },
     {
-    "name": "Yoru",
-    "abilities": [
-      {
-        "ability": "Fakeout",
-        "dealsDamage": false,
-        "duration": 10
-      },
-      {
-        "ability": "Blindside",
-        "dealsDamage": false,
-        "duration": 1.75
-      },
-      {
-        "ability": "Gatecrash",
-        "dealsDamage": false,
-        "duration": 30
-      },
-      {
-        "ability": "Dimensional Drift",
-        "dealsDamage": false,
-        "duration": 12
+      "name": "Yoru",
+      "abilities": [
+        {
+          "ability": "Fakeout",
+          "dealsDamage": false,
+          "duration": 10,
+          "slot": "grenade_ability"
+        },
+        {
+          "ability": "Blindside",
+          "dealsDamage": false,
+          "duration": 1.75,
+          "slot": "ability_1"
+        },
+        {
+          "ability": "Gatecrash",
+          "dealsDamage": false,
+          "duration": 30,
+          "slot": "ability_2"
+        },
+        {
+          "ability": "Dimensional Drift",
+          "dealsDamage": false,
+          "duration": 12,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "7f94d92c-4234-0a36-9646-3a87eb8b5c89",
+      "role": "Duelist"
     },
     {
       "name": "Clove",
@@ -481,49 +595,61 @@
         {
           "ability": "Pick-Me-Up",
           "dealsDamage": false,
-          "duration": 8
+          "duration": 8,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Meddle",
           "dealsDamage": false,
-          "duration": 5
+          "duration": 5,
+          "slot": "ability_1"
         },
         {
           "ability": "Ruse",
           "dealsDamage": false,
-          "duration": 13.5
+          "duration": 13.5,
+          "slot": "ability_2"
         },
         {
           "ability": "Not Dead Yet",
           "dealsDamage": false,
-          "duration": 12
+          "duration": 12,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "1dbf2edd-4729-0984-3115-daa5eed44993",
+      "role": "Controller"
     },
     {
       "name": "Iso",
       "abilities": [
         {
           "ability": "Undercut",
-          "dealsDamage": false
-          "duration": 4
+          "dealsDamage": false,
+          "duration": 4,
+          "slot": "ability_1"
         },
         {
           "ability": "Double Tap",
           "dealsDamage": true,
-          "duration": 12
+          "duration": 12,
+          "slot": "ability_2"
         },
         {
           "ability": "Contingency",
           "dealsDamage": false,
-          "duration": 4.6
+          "duration": 4.6,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Kill Contract",
           "dealsDamage": false,
-          "duration": 13
+          "duration": 13,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "0e38b510-41a8-5780-5e8f-568b2a4f2d6c",
+      "role": "Duelist"
     },
     {
       "name": "Harbor",
@@ -531,24 +657,30 @@
         {
           "ability": "Cascade",
           "dealsDamage": false,
-          "duration": 7
+          "duration": 7,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Cove",
           "dealsDamage": false,
-          "duration": 15
+          "duration": 15,
+          "slot": "ability_1"
         },
         {
           "ability": "High Tide",
           "dealsDamage": false,
-          "duration": 15
+          "duration": 15,
+          "slot": "ability_2"
         },
         {
           "ability": "Reckoning",
           "dealsDamage": false,
-          "duration": 9
+          "duration": 9,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "95b78ed7-4637-86d9-7e41-71ba8c293152",
+      "role": "Controller"
     },
     {
       "name": "Breach",
@@ -556,24 +688,30 @@
         {
           "ability": "Aftershock",
           "dealsDamage": true,
-          "duration": 2.2
+          "duration": 2.2,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Flashpoint",
           "dealsDamage": false,
-          "duration": 2
+          "duration": 2,
+          "slot": "ability_1"
         },
         {
           "ability": "Fault Line",
           "dealsDamage": false,
-          "duration": 3.5
+          "duration": 3.5,
+          "slot": "ability_2"
         },
         {
           "ability": "Rolling Thunder",
           "dealsDamage": false,
-          "duration": 6
+          "duration": 6,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "5f8d3a7f-467b-97f3-062c-13acf203c006",
+      "role": "Initiator"
     },
     {
       "name": "Cypher",
@@ -581,25 +719,30 @@
         {
           "ability": "Trapwire",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "grenade_ability"
         },
         {
           "ability": "Cyber Cage",
           "dealsDamage": false,
-          "duration": 7.25
+          "duration": 7.25,
+          "slot": "ability_1"
         },
         {
           "ability": "Spycam",
           "dealsDamage": false,
-          "duration": 0
+          "duration": 0,
+          "slot": "ability_2"
         },
         {
           "ability": "Neural Theft",
           "dealsDamage": false,
-          "duration": 4
+          "duration": 4,
+          "slot": "ultimate"
         }
-      ]
+      ],
+      "uuid": "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
+      "role": "Sentinel"
     }
   ]
 }
-
