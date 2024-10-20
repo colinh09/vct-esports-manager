@@ -43,7 +43,6 @@ class Player:
         self.deaths = {'attacking': 0, 'defending': 0}
         self.assists = {'attacking': 0, 'defending': 0}
         self.id = id
-        self.value = 0  # For heuristic calculations
         self.display_name = ''
         self.agent_guid = ''
         self.agent_name = ''
@@ -62,10 +61,15 @@ class Player:
         self.ability_effectiveness = {'damaging': 0, 'non_damaging': 0}
         self.last_ability_used = None
         self.last_ability_time = None
-        self.active_abilities = {}  # Track active non-damaging abilities
-        self.first_bloods = 0  # Track first bloods
-        self.multi_kills = 0  # Track multi-kills (2 or more kills in a round)
-        self.kills_this_round = 0  # Track kills in the current round
+        self.active_abilities = {}
+        self.first_bloods = 0
+        self.multi_kills = 0
+        self.kills_this_round = 0
+        self.econ_kills = 0
+        self.initiator_ability_deaths = 0
+        self.rounds_played = 0
+        self.score = 0
+        self.normalized_score = 0
 
     def __str__(self):
         return (f"Player: {self.display_name} (ID: {self.id})\n"
@@ -81,7 +85,11 @@ class Player:
                 f"Ability Effectiveness: Damaging: {self.ability_effectiveness['damaging']}, Non-damaging: {self.ability_effectiveness['non_damaging']}\n"
                 f"First Bloods: {self.first_bloods}\n"
                 f"Multi-kills: {self.multi_kills}\n"
-                f"Final Score: {self.value:.2f}")
+                f"Econ Kills: {self.econ_kills}\n"
+                f"Initiator Ability Deaths: {self.initiator_ability_deaths}\n"
+                f"Rounds Played: {self.rounds_played}\n"
+                f"Final Score: {self.score:.2f}\n"
+                f"Normalized Score: {self.normalized_score:.2f}")
     
     def reset_round_stats(self):
         self.ability_used_this_round = False
@@ -92,8 +100,9 @@ class Player:
         self.enemies_alive_at_clutch_start = 0
         self.last_ability_used = None
         self.last_ability_time = None
-        self.active_abilities = {}  # Reset active abilities at the start of each round
-        self.kills_this_round = 0  # Reset kills for the new round
+        self.active_abilities = {}
+        self.kills_this_round = 0
+        self.rounds_played += 1
 
     def use_ability(self, ability_slot, current_time, ability_info):
         self.ability_used_this_round = True
@@ -117,11 +126,10 @@ class Player:
         self.kills[side] += 1
         self.kills_this_round += 1
         
-        # Update multi-kills
         if self.kills_this_round >= 2:
             self.multi_kills += 1
 
-kda_values = {
+heuristic = {
     "attacking_kill": {
         "Duelist": 2,
         "Initiator": 1,
@@ -152,15 +160,17 @@ kda_values = {
         "Sentinel": 0.5,
         "Controller": 0.5
     },
-    "econ_kill": 0.5,  # Additional score for an econ kill
-    "round_win": 1,    # Score for winning a round
-    "round_survive": 0.5,  # Score for surviving a round (econ win)
+    "econ_kill": 0.5,
+    "round_win": 1,
+    "round_survive": 0.5,
     "ability_usage": {
-        "damaging": 0.05,  # Score for using a damaging ability effectively (a lot more frequent)
-        "non_damaging": 1  # Score for using a non-damaging ability effectively
+        "damaging": 0.05,
+        "non_damaging": 1
     },
-    "first_blood": 1.5,  # Score for getting first blood
-    "multi_kill": 1  # Score for getting a multi-kill (2 or more kills in a round)
+    "first_blood": 1.5,
+    "multi_kill": 1,
+    "clutch_win": 2,
+    "initiator_ability_death": 0.5
 }
 
 def safe_get(data: Dict[str, Any], *keys, default="[unknown]"):
@@ -222,39 +232,30 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
             killer_player.add_kill(killer_side == 'attacking')
             victim_player.deaths[victim_side] += 1
             
-            killer_player.value += kda_values[f"{killer_side}_kill"][killer_player.agent_role]
-            victim_player.value += kda_values[f"{victim_side}_death"][victim_player.agent_role]
-            
             if killer_player.current_weapon_cost < victim_player.current_weapon_cost:
-                killer_player.value += kda_values["econ_kill"]
+                killer_player.econ_kills += 1
                 econ_kill_str = f" (Econ kill: {killer_player.current_weapon} (${killer_player.current_weapon_cost}) vs {victim_player.current_weapon} (${victim_player.current_weapon_cost}))"
             else:
                 econ_kill_str = f" ({killer_player.current_weapon} (${killer_player.current_weapon_cost}) vs {victim_player.current_weapon} (${victim_player.current_weapon_cost}))"
             
             if victim_player.agent_role == "Initiator" and victim_player.ability_used_this_round:
-                victim_player.value += 0.5
+                victim_player.initiator_ability_deaths += 1
             
-            # Check if the kill was due to an ability
             ability_slot = safe_get(event_data, 'ability', 'fallback', 'inventorySlot', 'slot').lower()
             if ability_slot:
                 ability_info = mappings['agents_info'][killer_player.agent_guid]['abilities'].get(ability_slot)
                 if ability_info and ability_info['dealsDamage']:
                     killer_player.ability_effectiveness['damaging'] += 1
-                    killer_player.value += kda_values['ability_usage']['damaging']
             
             victim_player.is_alive = False
             
-            # Check for first blood
             if is_first_kill:
                 killer_player.first_bloods += 1
-                killer_player.value += kda_values['first_blood']
                 first_blood_str = " (First Blood!)"
             else:
                 first_blood_str = ""
             
-            # Check for multi-kills
             if killer_player.kills_this_round == 2:
-                killer_player.value += kda_values['multi_kill']
                 multi_kill_str = " (Multi-kill!)"
             else:
                 multi_kill_str = ""
@@ -268,16 +269,12 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
             if assistant_player:
                 assistant_side = 'attacking' if assistant_player.team_id == attacking_team else 'defending'
                 assistant_player.assists[assistant_side] += 1
-                assistant_player.value += kda_values["assist"][assistant_player.agent_role]
                 
-                # Check if the assist was due to a non-damaging ability
                 if assistant_player.has_active_non_damaging_ability():
                     assistant_player.ability_effectiveness['non_damaging'] += 1
-                    assistant_player.value += kda_values['ability_usage']['non_damaging']
         
         assist_str = f" assisted by {', '.join(assists)}" if assists else ""
         
-        # Check for potential clutch situation
         team_players = {}
         for player in player_map.values():
             if player.is_alive:
@@ -314,7 +311,6 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
                 ability_info = mappings['agents_info'][causer_player.agent_guid]['abilities'].get(ability_slot)
                 if ability_info and ability_info['dealsDamage']:
                     causer_player.ability_effectiveness['damaging'] += 1
-                    causer_player.value += kda_values['ability_usage']['damaging']
         return None
 
     elif event_type == 'snapshot':
@@ -339,14 +335,11 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
         for player in player_map.values():
             if player.team_id == winning_team:
                 player.rounds_won += 1
-                player.value += kda_values["round_win"]
                 if player.is_alive:
                     player.rounds_survived += 1
-                    player.value += kda_values["round_survive"]
                 
                 if player.in_clutch_scenario:
                     player.clutch_wins += 1
-                    player.value += player.enemies_alive_at_clutch_start
         
         return f"Round ended. Winning team: {winning_team}"
 
@@ -372,8 +365,8 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
     current_round = 0
     round_events = []
     attacking_team = None
-    current_time = 0  # Initialize current time
-    is_first_kill = True  # Initialize is_first_kill flag
+    current_time = 0
+    is_first_kill = True
     
     for event in game_data:
         if 'roundStarted' in event:
@@ -385,13 +378,12 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
             for player in player_map.values():
                 player.reset_round_stats()
             
-            is_first_kill = True  # Reset is_first_kill flag at the start of each round
+            is_first_kill = True
         
         wall_time = safe_get(event, 'metadata', 'wallTime')
         
-        # Update current_time based on the snapshot event
         if 'snapshot' in event:
-            current_time += 1  # Increment by 1 second for each snapshot event
+            current_time += 1
         
         for event_type, event_data in event.items():
             if event_type not in ['metadata', 'configuration', 'roundStarted', 'roundEnded', 'platformGameId', 'observerTarget']:
@@ -399,7 +391,7 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
                 if parsed_event:
                     round_events.append(f"[{wall_time}] {parsed_event}")
                     if event_type == 'playerDied':
-                        is_first_kill = False  # Set is_first_kill to False after the first kill of the round
+                        is_first_kill = False
         
         if 'roundEnded' in event:
             round_end_event = parse_event('roundEnded', event['roundEnded'], player_map, include_snapshots, mappings, attacking_team, current_time, False)
@@ -407,6 +399,11 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
             with open(os.path.join(output_dir, f'round_{current_round}.txt'), 'w') as f:
                 f.write('\n'.join(round_events))
     
+    # Calculate final scores
+    for player in player_map.values():
+        player.score = calculate_player_score(player, heuristic)
+        player.normalized_score = player.score / player.rounds_played if player.rounds_played > 0 else 0
+
     with open(os.path.join(output_dir, 'player_stats.txt'), 'w') as f:
         for player_id, player in player_map.items():
             player_info = str(player)
@@ -414,6 +411,43 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
             print(player_info + "\n")
 
     print("Processing complete. Check the output directory for results.")
+
+def calculate_player_score(player: Player, heuristic: Dict[str, Any]) -> float:
+    score = 0
+    
+    # Kills and deaths
+    for side in ['attacking', 'defending']:
+        score += player.kills[side] * heuristic[f"{side}_kill"][player.agent_role]
+        score += player.deaths[side] * heuristic[f"{side}_death"][player.agent_role]
+    
+    # Assists
+    score += sum(player.assists.values()) * heuristic["assist"][player.agent_role]
+    
+    # Econ kills
+    score += player.econ_kills * heuristic["econ_kill"]
+    
+    # Round wins and survivals
+    score += player.rounds_won * heuristic["round_win"]
+    score += player.rounds_survived * heuristic["round_survive"]
+    
+    # Ability usage
+    score += player.ability_effectiveness['damaging'] * heuristic["ability_usage"]["damaging"]
+    score += player.ability_effectiveness['non_damaging'] * heuristic["ability_usage"]["non_damaging"]
+    
+    # First bloods
+    score += player.first_bloods * heuristic["first_blood"]
+    
+    # Multi-kills
+    score += player.multi_kills * heuristic["multi_kill"]
+    
+    # Clutch wins
+    score += player.clutch_wins * heuristic["clutch_win"]
+    
+    # Initiator ability deaths
+    if player.agent_role == "Initiator":
+        score += player.initiator_ability_deaths * heuristic["initiator_ability_death"]
+    
+    return score
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
