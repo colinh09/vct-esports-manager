@@ -4,7 +4,7 @@ def create_vct_final_agent():
     vct_final_agent = BedrockLLMAgent(BedrockLLMAgentOptions(
         name='final-agent',
         description='An agent that will take a list of players and construct a final team.',
-        model_id='anthropic.claude-3-haiku-20240307-v1:0',
+        model_id='anthropic.claude-3-sonnet-20240229-v1:0',
         region='us-east-1',
         streaming=False,
         inference_config={

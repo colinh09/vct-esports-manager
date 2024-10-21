@@ -161,7 +161,7 @@ heuristic = {
         "Controller": 0.5
     },
     "econ_kill": 0.5,
-    "round_win": 1,
+    "round_win": 0.5,
     "round_survive": 0.5,
     "ability_usage": {
         "damaging": 0.05,
@@ -169,8 +169,8 @@ heuristic = {
     },
     "first_blood": 1.5,
     "multi_kill": 1,
-    "clutch_win": 2,
-    "initiator_ability_death": 0.5
+    "clutch_win": 1,
+    "initiator_ability_death": 0.10
 }
 
 def safe_get(data: Dict[str, Any], *keys, default="[unknown]"):
@@ -346,24 +346,26 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
     else:
         return None
 
-def process_game_file(input_file: str, output_dir: str, include_snapshots: bool, mappings: Dict[str, Dict[str, str]]):
-    with open(input_file, 'r') as f:
+def process_game_file(file_path):
+    # Load mappings
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    mappings_file = os.path.join(script_dir, 'valorant_mappings.json')
+    agents_file = os.path.join(script_dir, 'agent.json')
+    weapons_file = os.path.join(script_dir, 'weapons.json')
+    mappings = load_mappings(mappings_file, agents_file, weapons_file)
+
+    with open(file_path, 'r') as f:
         game_data = json.load(f)
-    
-    os.makedirs(output_dir, exist_ok=True)
     
     config_event = next((event for event in game_data if 'configuration' in event), None)
     if config_event:
         config_info, player_map, team_players = parse_configuration(config_event['configuration'], mappings)
-        with open(os.path.join(output_dir, 'configuration.txt'), 'w') as f:
-            f.write(config_info)
     else:
         print("Warning: No configuration event found.")
         player_map = {}
         team_players = {}
     
     current_round = 0
-    round_events = []
     attacking_team = None
     current_time = 0
     is_first_kill = True
@@ -372,8 +374,6 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
         if 'roundStarted' in event:
             current_round = safe_get(event['roundStarted'], 'roundNumber')
             attacking_team = event['roundStarted']['spikeMode']['attackingTeam']['value']
-            round_events = []
-            round_events.append(f"Round {current_round} started. Attacking team: {attacking_team}")
             
             for player in player_map.values():
                 player.reset_round_stats()
@@ -387,30 +387,39 @@ def process_game_file(input_file: str, output_dir: str, include_snapshots: bool,
         
         for event_type, event_data in event.items():
             if event_type not in ['metadata', 'configuration', 'roundStarted', 'roundEnded', 'platformGameId', 'observerTarget']:
-                parsed_event = parse_event(event_type, event_data, player_map, include_snapshots, mappings, attacking_team, current_time, is_first_kill)
-                if parsed_event:
-                    round_events.append(f"[{wall_time}] {parsed_event}")
-                    if event_type == 'playerDied':
-                        is_first_kill = False
-        
-        if 'roundEnded' in event:
-            round_end_event = parse_event('roundEnded', event['roundEnded'], player_map, include_snapshots, mappings, attacking_team, current_time, False)
-            round_events.append(f"[{wall_time}] {round_end_event}")
-            with open(os.path.join(output_dir, f'round_{current_round}.txt'), 'w') as f:
-                f.write('\n'.join(round_events))
+                parse_event(event_type, event_data, player_map, True, mappings, attacking_team, current_time, is_first_kill)
+                if event_type == 'playerDied':
+                    is_first_kill = False
     
     # Calculate final scores
-    for player in player_map.values():
+    player_stats = {}
+    for player_id, player in player_map.items():
         player.score = calculate_player_score(player, heuristic)
         player.normalized_score = player.score / player.rounds_played if player.rounds_played > 0 else 0
-
-    with open(os.path.join(output_dir, 'player_stats.txt'), 'w') as f:
-        for player_id, player in player_map.items():
-            player_info = str(player)
-            f.write(player_info + "\n\n")
-            print(player_info + "\n")
-
-    print("Processing complete. Check the output directory for results.")
+        player_stats[player_id] = {
+            'kills_attacking': player.kills['attacking'],
+            'kills_defending': player.kills['defending'],
+            'deaths_attacking': player.deaths['attacking'],
+            'deaths_defending': player.deaths['defending'],
+            'assists_attacking': player.assists['attacking'],
+            'assists_defending': player.assists['defending'],
+            'econ_kills': player.econ_kills,
+            'rounds_won': player.rounds_won,
+            'rounds_survived': player.rounds_survived,
+            'ability_usage_damaging': player.ability_usage['damaging'],
+            'ability_usage_non_damaging': player.ability_usage['non_damaging'],
+            'ability_effectiveness_damaging': player.ability_effectiveness['damaging'],
+            'ability_effectiveness_non_damaging': player.ability_effectiveness['non_damaging'],
+            'first_bloods': player.first_bloods,
+            'multi_kills': player.multi_kills,
+            'clutch_wins': player.clutch_wins,
+            'initiator_ability_deaths': player.initiator_ability_deaths,
+            'final_score': round(player.score, 2),
+            'normalized_score': round(player.normalized_score, 2)
+        }
+    
+    
+    return player_stats
 
 def calculate_player_score(player: Player, heuristic: Dict[str, Any]) -> float:
     score = 0
@@ -450,18 +459,7 @@ def calculate_player_score(player: Player, heuristic: Dict[str, Any]) -> float:
     return score
 
 if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    mappings_file = os.path.join(script_dir, 'valorant_mappings.json')
-    agents_file = os.path.join(script_dir, 'agent.json')
-    weapons_file = os.path.join(script_dir, 'weapons.json')
-    mappings = load_mappings(mappings_file, agents_file, weapons_file)
-    
     default_input_file = "/home/colin/vct-esports-manager/data/test-files/sample/sample.json"
-    default_output_dir = "/home/colin/vct-esports-manager/data/test-files/sample"
     
-    input_file = input(f"Enter the path to the input JSON file (default: {default_input_file}): ").strip() or default_input_file
-    output_dir = input(f"Enter the directory to store the output files (default: {default_output_dir}): ").strip() or default_output_dir
-    include_snapshots = input("Include snapshot events? (y/n): ").lower() == 'y'
-    
-    process_game_file(input_file, output_dir, include_snapshots, mappings)
-    print("Processing complete. Check the output directory for results.")
+    player_stats = process_game_file(default_input_file)
+    print(json.dumps(player_stats, indent=2))

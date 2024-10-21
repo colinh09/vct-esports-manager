@@ -57,7 +57,7 @@ class VCTAgentSystem:
 
     async def process_query(self, user_input: str, user_id: str, session_id: str) -> Dict[str, Any]:
         response: AgentResponse = await self.orchestrator.route_request(user_input, user_id, session_id)
-        
+        print(response)
         result = {
             "agent_name": response.metadata.agent_name,
             "content": response.output.content[0]['text'] if response.output.content else "",
