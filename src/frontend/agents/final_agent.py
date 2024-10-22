@@ -13,7 +13,6 @@ def create_vct_final_agent():
             'topP': 0.9,
             'stopSequences': ['Human:', 'AI:']
         },
-        tool_config=None
     ))
 
     vct_final_agent.set_system_prompt(

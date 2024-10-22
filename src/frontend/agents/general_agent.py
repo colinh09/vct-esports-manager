@@ -9,7 +9,7 @@ import os
 from dotenv import load_dotenv
 import json
 import asyncio
-from custom_bedrock_agent import CustomBedrockLLMAgent 
+from .custom.custom_bedrock_agent import CustomBedrockLLMAgent 
 
 load_dotenv()
 
@@ -106,25 +106,17 @@ async def custom_function_handler(response, conversation):
                 input_data.get('first_name'),
                 input_data.get('last_name')
             )
-
-            # Just JSON dump the result
             json_result = json.dumps(result, default=str)
 
-            # Create a user message with the JSON result
-            user_message = ConversationMessage(
-                role=ParticipantRole.USER.value,
-                content=[{'text': json_result}]
-            )
-
-            return False, (json_result, user_message)
+            return json_result
         else:
             error_result = json.dumps({"status": "error", "message": "Unexpected response format"})
             logger.error("Unexpected response format")
-            return False, (error_result, None)
+            return False, error_result
     except Exception as e:
         logger.error(f"Error in custom_function_handler: {str(e)}", exc_info=True)
         error_result = json.dumps({"status": "error", "message": str(e)})
-        return False, (error_result, None)
+        return error_result
 
 def setup_player_info_agent(
     model_id='ai21.jamba-1-5-mini-v1:0',

@@ -7,9 +7,10 @@ from multi_agent_orchestrator.orchestrator import MultiAgentOrchestrator, Orches
 from multi_agent_orchestrator.agents import AgentResponse, ChainAgent, ChainAgentOptions
 from multi_agent_orchestrator.classifiers import BedrockClassifier, BedrockClassifierOptions, AnthropicClassifier, AnthropicClassifierOptions
 
-from input_parser_agent import create_vct_input_parser
-from sql_agent import create_valorant_agent
-from final_agent import create_vct_final_agent
+from .input_parser_agent import create_vct_input_parser
+from .general_agent import setup_player_info_agent
+from .team_builder_agent import setup_team_builder_agent
+from .final_agent import create_vct_final_agent
 
 load_dotenv()
 
@@ -50,13 +51,14 @@ class VCTAgentSystem:
 
     def _create_chain_agent(self):
         vct_input_parser = create_vct_input_parser()
-        valorant_agent = create_valorant_agent()
         final_agent = create_vct_final_agent()
+        team_builder_agent = setup_team_builder_agent()
+        player_info_agent = setup_player_info_agent()
 
         chain_options = ChainAgentOptions(
             name='VCTChainAgent',
             description='A chain of agents for processing Valorant esports queries',
-            agents=[vct_input_parser, valorant_agent, final_agent],
+            agents=[vct_input_parser, team_builder_agent, final_agent],
             default_output='The chain processing encountered an issue.',
             save_chat=True
         )

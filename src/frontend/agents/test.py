@@ -9,10 +9,7 @@ from multi_agent_orchestrator.orchestrator import MultiAgentOrchestrator, Orches
 from multi_agent_orchestrator.agents import AgentResponse, ChainAgent, ChainAgentOptions
 from multi_agent_orchestrator.classifiers import BedrockClassifier, BedrockClassifierOptions, AnthropicClassifier, AnthropicClassifierOptions
 
-from input_parser_agent import create_vct_input_parser
-from sql_agent import create_valorant_agent
-from final_agent import create_vct_final_agent
-from general_agent import setup_player_info_agent
+from .general_agent import setup_player_info_agent
 
 load_dotenv()
 

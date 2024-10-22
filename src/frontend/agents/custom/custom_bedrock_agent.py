@@ -66,7 +66,7 @@ class CustomBedrockLLMAgent(BedrockLLMAgent):
 
                 if any('toolUse' in content for content in bedrock_response.content):
                     tool_result = await self.tool_config['useToolHandler'](bedrock_response, conversation)
-                    _, (json_str, _) = tool_result
+                    json_str= tool_result
                     tool_data = json.loads(json_str)
                     
                     tool_response = ConversationMessage(

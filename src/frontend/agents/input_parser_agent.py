@@ -34,7 +34,6 @@ def create_vct_input_parser():
         VCT_INTERNATIONAL: [number]
         VCT_CHALLENGER: [number]
         GAME_CHANGERS: [number]
-        ROLES: sentinel, duelist, controller, initiator, igl
 
         Replace [number] with the appropriate integer value. The ROLES line should always include all five roles in the order shown.
 
@@ -44,42 +43,36 @@ def create_vct_input_parser():
         VCT_INTERNATIONAL: 5
         VCT_CHALLENGER: 0
         GAME_CHANGERS: 0
-        ROLES: sentinel, duelist, controller, initiator, igl
 
         2. Input: "Build a team using only players from VCT Challengers."
         Output:
         VCT_INTERNATIONAL: 0
         VCT_CHALLENGER: 5
         GAME_CHANGERS: 0
-        ROLES: sentinel, duelist, controller, initiator, igl
 
         3. Input: "Build a team using only players from VCT Game Changers."
         Output:
         VCT_INTERNATIONAL: 0
         VCT_CHALLENGER: 0
         GAME_CHANGERS: 5
-        ROLES: sentinel, duelist, controller, initiator, igl
 
         4. Input: "Build a team that includes at least two players from an underrepresented group, such as the Game Changers program."
         Output:
         VCT_INTERNATIONAL: 2
         VCT_CHALLENGER: 2
         GAME_CHANGERS: 2
-        ROLES: sentinel, duelist, controller, initiator, igl
 
         5. Input: "Build a team with players from at least three different regions."
         Output:
         VCT_INTERNATIONAL: 2
         VCT_CHALLENGER: 2
         GAME_CHANGERS: 2
-        ROLES: sentinel, duelist, controller, initiator, igl
 
         6. Input: "Build a team that includes at least two semi-professional players, such as from VCT Challengers or VCT Game Changers."
         Output:
         VCT_INTERNATIONAL: 2
         VCT_CHALLENGER: 2
         GAME_CHANGERS: 2
-        ROLES: sentinel, duelist, controller, initiator, igl
 
         Remember: When a specific number is mentioned for any tournament type, apply that number to ALL tournament types. The total number of players may exceed 5 in these cases. Only when "only" is used for a specific tournament type should all 5 players be assigned to that single type."""
     )
