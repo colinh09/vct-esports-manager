@@ -16,8 +16,6 @@ load_dotenv()
 
 class VCTAgentSystem:
     def __init__(self):
-        self.api_key = os.getenv('ANTHROPIC_API_KEY')
-        self.use_anthropic = False
         self.orchestrator = self._create_orchestrator()
 
     def _create_orchestrator(self, classifier=None):
@@ -52,8 +50,10 @@ class VCTAgentSystem:
         return orchestrator
 
     def _create_chain_agent(self):
-        vct_input_parser = create_vct_input_parser(self.use_anthropic, self.api_key)
-        team_builder_agent = setup_team_builder_agent(self.use_anthropic, self.api_key)
+        vct_input_parser = create_vct_input_parser()
+        final_agent = create_vct_final_agent()
+        team_builder_agent = setup_team_builder_agent()
+        player_info_agent = setup_player_info_agent()
 
         chain_options = ChainAgentOptions(
             name='VCTChainAgent',
@@ -86,11 +86,15 @@ class VCTAgentSystem:
             return False
 
     async def switch_to_anthropic_classifier(self):
-        self.use_anthropic = True
+        ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
+        if not ANTHROPIC_API_KEY:
+            raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
+        
         anthropic_classifier = AnthropicClassifier(AnthropicClassifierOptions(
-            api_key=self.api_key
+            api_key=ANTHROPIC_API_KEY
         ))
         
+        # Create a new orchestrator with the Anthropic classifier
         self.orchestrator = self._create_orchestrator(classifier=anthropic_classifier)
 
     async def initialize(self):

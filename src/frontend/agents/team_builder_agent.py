@@ -1,4 +1,4 @@
-from multi_agent_orchestrator.agents import BedrockLLMAgent, BedrockLLMAgentOptions, AnthropicAgent, AnthropicAgentOptions
+from multi_agent_orchestrator.agents import BedrockLLMAgent, BedrockLLMAgentOptions
 from multi_agent_orchestrator.types import ConversationMessage, ParticipantRole
 from typing import List, Dict, Optional
 import psycopg2
@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 import json
 import asyncio
 from .custom.custom_bedrock_agent import CustomBedrockLLMAgent
-from .custom.custom_anthropic_agent import CustomAnthropicAgent
 import concurrent.futures
 
 load_dotenv()
@@ -281,9 +280,9 @@ def team_builder_wrapper(vct_international: int = 0,
                 f"game_changers={game_changers}")
     try:
         tournament_types = {
-            'vct-international': int(vct_international or 0),
-            'vct-challengers': int(vct_challenger or 0),
-            'game-changers': int(game_changers or 0)
+            'vct-international': vct_international,
+            'vct-challengers': vct_challenger,
+            'game-changers': game_changers
         }
         
         if not any(tournament_types.values()):
@@ -405,96 +404,72 @@ async def custom_function_handler(response, conversation):
         logger.error(f"Error in custom_function_handler: {str(e)}", exc_info=True)
         return json.dumps({"status": "error", "message": str(e)})
 
-def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
-    tool_config = {
-        'tool': [{
-            'toolSpec': {
-                'name': 'get_all_players',
-                'description': """Get top players for all roles across specified tournament types. This tool MUST be called first to get
-                the necessary information about VCT players to build a team. This tool only needs to be called ONCE. Parameters MUST be 
-                integers. Do not insert NONE into any parameter. Insert 0 instead if a tournament type is not needed.""",
-                'inputSchema': {
-                    'json': {
-                        'type': 'object',
-                        'properties': {
-                            'vct_international': {
-                                'type': 'integer',
-                                'description': 'The number of vct-international players to fetch per role. Set this value to 0 if no players from this tournament type is needed'
-                            },
-                            'vct_challenger': {
-                                'type': 'integer',
-                                'description': 'The number of vct-challenger players to fetch per role. Set this value to 0 if no players from this tournament type is needed'
-                            },
-                            'game_changers': {
-                                'type': 'integer',
-                                'description': 'The number of game-changer players to fetch per role. Set this value to 0 if no players from this tournament type is needed'
+def setup_team_builder_agent(
+    model_id='ai21.jamba-1-5-mini-v1:0',
+    region='us-east-1',
+    max_tokens=4096,
+    temperature=0.1,
+    top_p=0.9,
+    stop_sequences=None
+):
+    if stop_sequences is None:
+        stop_sequences = ['Human:', 'AI:']
+
+    options = BedrockLLMAgentOptions(
+        name='Team Builder Agent',
+        description='An agent for building optimal team compositions based on tournament data',
+        model_id=model_id,
+        region=region,
+        streaming=False,
+        inference_config={
+            'maxTokens': max_tokens,
+            'temperature': temperature,
+            'topP': top_p,
+            'stopSequences': stop_sequences
+        },
+        tool_config={
+            'tool': [
+                {
+                    'toolSpec': {
+                        'name': 'get_all_players',
+                        'description': """Get top players for all roles across specified tournament types. This tool MUST be called first to get
+                        the necessary information about VCT players to build a team. This tool only needs to be called ONCE.""",
+                        'inputSchema': {
+                            'json': {
+                                'type': 'object',
+                                'properties': {
+                                    'vct_international': {
+                                        'type': 'integer',
+                                        'description': 'The number of vct-international players to fetch per role. Default value is 0.'
+                                    },
+                                    'vct_challenger': {
+                                        'type': 'integer',
+                                        'description': 'The number of vct-challenger players to fetch per role. Default value is 0.'
+                                    },
+                                    'game_changers': {
+                                        'type': 'integer',
+                                        'description': 'The number of game-changer players to fetch per role. Default value is 0.'
+                                    }
+                                }
                             }
                         }
-                    },
-                    'required': ["vct_international", "vct_challenger", "game_changers"]
+                    }
                 }
-            }
-        }],
-        'useToolHandler': custom_function_handler
-    }
-
-    if use_anthropic:
-        options = AnthropicAgentOptions(
-            name='Team Builder Agent',
-            description='An agent for building optimal team compositions based on tournament data',
-            model_id='claude-3-haiku-20240307',
-            api_key = anthropic_api_key,
-            streaming=False,
-            inference_config={
-                'maxTokens': 4096,
-                'temperature': 0.0,
-                'topP': 0.1,
-                'stopSequences': ['Human:', 'AI:']
-            },
-            tool_config=tool_config
-        )
-        agent = CustomAnthropicAgent(options)
-    else:
-        options = BedrockLLMAgentOptions(
-            name='Team Builder Agent',
-            description='An agent for building optimal team compositions based on tournament data',
-            model_id='anthropic.claude-3-sonnet-20240229-v1:0',
-            region='us-east-1',
-            streaming=False,
-            inference_config={
-                'maxTokens': 4096,
-                'temperature': 0.0,
-                'topP': 0.1,
-                'stopSequences': ['Human:', 'AI:']
-            },
-            tool_config=tool_config
-        )
-        agent = BedrockLLMAgent(options)
-    
+            ],
+            'useToolHandler': custom_function_handler
+        }
+    )
+    agent = CustomBedrockLLMAgent(options)
     agent.set_system_prompt(
         """TOOL CALL INSTRUCTIONS - READ CAREFULLY:
-        1. When you receive input like this:
-        VCT_INTERNATIONAL: X
-        VCT_CHALLENGER: Y
-        GAME_CHANGERS: Z
-
-        You MUST IMMEDIATELY extract these exact numbers and use them in your tool call.
-
-        2. Your VERY FIRST ACTION must be this exact tool call:
-        get_all_players(vct_international=X, vct_challenger=Y, game_changers=Z)
-        DO NOT write anything else before making this tool call.
-        DO NOT explain what you're doing.
-        DO NOT acknowledge the input.
-        JUST MAKE THE TOOL CALL.
-
-        3. INCORRECT:
-        "Here is the team composition based on your request:
-        VCT_INTERNATIONAL: X..."
-        
-        CORRECT:
-        get_all_players(vct_international=X, vct_challenger=Y, game_changers=Z)
-
-        4. After receiving the tool response, proceed with team building.
+        1. Make EXACTLY ONE tool call to get_all_players using the input numbers
+        2. The function call must be in this exact format:
+           get_all_players(vct_international=X, vct_challenger=Y, game_changers=Z)
+           where X, Y, and Z are the numbers from your input
+        3. You will receive ALL player data in a single response
+        4. DO NOT make multiple tool calls
+        5. If you receive no data for a role, that means no players are available - you must tell the user
+        6. After making the tool call, you MUST proceed with team building using ONLY that data
         
         FIRST STEP - MANDATORY:
         Before ANY other actions or output, you MUST make a tool call to get_all_players with the tournament type numbers from the input.

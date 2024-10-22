@@ -1,39 +1,22 @@
-from multi_agent_orchestrator.agents import BedrockLLMAgent, BedrockLLMAgentOptions, AnthropicAgent, AnthropicAgentOptions
+from multi_agent_orchestrator.agents import BedrockLLMAgent, BedrockLLMAgentOptions
 
-def create_vct_input_parser(use_anthropic=False, anthropic_api_key=None):
-    if use_anthropic:
-        options = AnthropicAgentOptions(
-            name='vct-input-parser',
-            description='An agent to parse and structure VCT-related input, specifically for team building requests.',
-            model_id='claude-3-haiku-20240307',
-            api_key = anthropic_api_key,
-            streaming=False,
-            inference_config={
-                'maxTokens': 500,
-                'temperature': 0.1,
-                'topP': 0.9,
-                'stopSequences': ['Human:', 'AI:']
-            }
-        )
-        agent = AnthropicAgent(options)
-    else:
-        options = BedrockLLMAgentOptions(
-            name='vct-input-parser',
-            description='An agent to parse and structure VCT-related input, specifically for team building requests.',
-            model_id='anthropic.claude-3-sonnet-20240229-v1:0',
-            region='us-east-1',
-            streaming=False,
-            inference_config={
-                'maxTokens': 500,
-                'temperature': 0.1,
-                'topP': 0.9,
-                'stopSequences': ['Human:', 'AI:']
-            },
-            save_chat=False
-        )
-        agent = BedrockLLMAgent(options)
+def create_vct_input_parser():
+    vct_input_parser = BedrockLLMAgent(BedrockLLMAgentOptions(
+        name='vct-input-parser',
+        description='An agent to parse and structure VCT-related input, specifically for team building requests.',
+        model_id='ai21.jamba-1-5-mini-v1:0',
+        region='us-east-1',
+        streaming=False,
+        inference_config={
+            'maxTokens': 500,
+            'temperature': 0.1,
+            'topP': 0.9,
+            'stopSequences': ['Human:', 'AI:']
+        },
+        save_chat = False,
+    ))
 
-    agent.set_system_prompt(
+    vct_input_parser.set_system_prompt(
     """You are an AI assistant designed to analyze Valorant Champions Tour (VCT) related input, specifically for team building requests. Your task is to interpret user requests for team composition and provide a structured response that accurately reflects the user's specifications.
 
     Tournament Types:
@@ -122,4 +105,4 @@ def create_vct_input_parser(use_anthropic=False, anthropic_api_key=None):
     Remember: When a specific number is mentioned for any tournament type, apply that number to ALL tournament types. The total number of players may exceed 5 in these cases. Only when "only" is used for a specific tournament type should all 5 players be assigned to that single type."""
     )
 
-    return agent
+    return vct_input_parser
