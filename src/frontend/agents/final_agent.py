@@ -4,7 +4,7 @@ def create_vct_final_agent():
     vct_final_agent = BedrockLLMAgent(BedrockLLMAgentOptions(
         name='final-agent',
         description='An agent that will take a list of players and construct a final team.',
-        model_id='anthropic.claude-3-sonnet-20240229-v1:0',
+        model_id='ai21.jamba-1-5-mini-v1:0',
         region='us-east-1',
         streaming=False,
         inference_config={
@@ -12,7 +12,8 @@ def create_vct_final_agent():
             'temperature': 0.1,
             'topP': 0.9,
             'stopSequences': ['Human:', 'AI:']
-        }
+        },
+        tool_config=None
     ))
 
     vct_final_agent.set_system_prompt(

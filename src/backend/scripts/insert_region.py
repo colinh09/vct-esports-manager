@@ -2,6 +2,7 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 import logging
+from psycopg2.extras import execute_batch
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -9,132 +10,98 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Load environment variables
 load_dotenv()
 
-# Connect to the database
-conn = psycopg2.connect(os.getenv('RDS_DATABASE_URL'))
-cursor = conn.cursor()
+def create_games_played_column():
+    """Add games_played column to players table if it doesn't exist"""
+    try:
+        cursor.execute("""
+        ALTER TABLE players
+        ADD COLUMN IF NOT EXISTS games_played INTEGER DEFAULT 0;
+        """)
+        conn.commit()
+        logging.info("Added games_played column to players table")
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error adding column: {e}")
 
-# Team acronym to region mapping
-team_regions = {
-    'ACE': 'EMEA',
-    'ACEK': 'APAC',
-    'AG': 'CN',
-    'ANM': 'EMEA',
-    'ARFS': 'APAC',
-    'ASE': 'CN',
-    'ASEO': 'CN',
-    'ASTR': 'APAC',
-    'BBGS': 'CN',
-    'BBL': 'EMEA',
-    'BIG': 'EMEA',
-    'BLG': 'CN',
-    'CAPY': 'APAC',
-    'CCG': 'CN',
-    'CG': 'APAC',
-    'DRG': 'CN',
-    'EDG': 'CN',
-    'EDGS': 'CN',
-    'FKS': 'EMEA',
-    'FLC': 'EMEA',
-    'FNC': 'EMEA',
-    'FPX': 'CN',
-    'FRZ': 'EMEA',
-    'FUT': 'EMEA',
-    'G0DL': 'APAC',
-    'GANG': 'APAC',
-    'GDR': 'APAC',
-    'GE': 'APAC',
-    'GES': 'APAC',
-    'GIA': 'EMEA',
-    'GMB': 'EMEA',
-    'GMD': 'APAC',
-    'GRY': 'APAC',
-    'GUI': 'EMEA',
-    'JDG': 'CN',
-    'KC': 'EMEA',
-    'KOI': 'EMEA',
-    'KONE': 'CN',
-    'LES': 'APAC',
-    'LKR': 'CN',
-    'LL': 'APAC',
-    'M8': 'EMEA',
-    'MAD1': 'APAC',
-    'MDL': 'APAC',
-    'MLT': 'APAC',
-    'N2F': 'APAC',
-    'NAVI': 'EMEA',
-    'NOVA': 'CN',
-    'NPG': 'CN',
-    'O3O': 'APAC',
-    'OGS': 'APAC',
-    'OGT': 'APAC',
-    'PURR': 'APAC',
-    'QTXX': 'APAC',
-    'RBLS': 'EMEA',
-    'RGE': 'APAC',
-    'RVNT': 'APAC',
-    'S1': 'EMEA',
-    'SMB': 'EMEA',
-    'SUR': 'EMEA',
-    'SXG': 'CN',
-    'TE': 'CN',
-    'TEC': 'CN',
-    'TH': 'EMEA',
-    'TL': 'EMEA',
-    'TLN': 'APAC',
-    'TRR': 'APAC',
-    'TYL': 'CN',
-    'URB': 'CN',
-    'UWU': 'KR',
-    'VIT': 'EMEA',
-    'VLT': 'APAC',
-    'WOL': 'CN',
-    'XL': 'EMEA',
-    'XTB': 'APAC',
-    'ZTA': 'EMEA'
-}
+def count_games_played():
+    """Count games played for each player and tournament type combination"""
+    try:
+        # Get the count of games for each player_id and tournament_type
+        cursor.execute("""
+        WITH game_counts AS (
+            SELECT 
+                player_id,
+                tournament_type,
+                COUNT(DISTINCT platform_game_id) as games_count
+            FROM player_mapping
+            GROUP BY player_id, tournament_type
+        )
+        SELECT 
+            p.player_id,
+            p.tournament_type,
+            COALESCE(gc.games_count, 0) as games_count
+        FROM players p
+        LEFT JOIN game_counts gc 
+            ON p.player_id = gc.player_id 
+            AND p.tournament_type = gc.tournament_type
+        """)
+        
+        player_games = cursor.fetchall()
+        logging.info(f"Found game counts for {len(player_games)} player records")
 
+        # Update the players table with the games played count
+        update_query = """
+        UPDATE players 
+        SET games_played = %s
+        WHERE player_id = %s AND tournament_type = %s
+        """
+        
+        # Prepare the data for batch update
+        update_data = [(count, player_id, tournament_type) 
+                      for player_id, tournament_type, count in player_games]
+        
+        # Execute batch update
+        execute_batch(cursor, update_query, update_data, page_size=1000)
+        conn.commit()
+        
+        logging.info(f"Successfully updated games_played for {len(update_data)} players")
+        
+        # Log some statistics
+        cursor.execute("""
+        SELECT 
+            MIN(games_played) as min_games,
+            MAX(games_played) as max_games,
+            AVG(games_played)::numeric(10,2) as avg_games
+        FROM players
+        WHERE games_played > 0
+        """)
+        stats = cursor.fetchone()
+        logging.info(f"Statistics - Min games: {stats[0]}, Max games: {stats[1]}, Avg games: {stats[2]}")
+        
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error counting games played: {e}")
+
+# Main execution
 try:
-    # Get all players with 'INTL' region and their team acronyms
-    cursor.execute("""
-    SELECT DISTINCT p.player_id, t.acronym
-    FROM players p
-    JOIN teams t ON p.home_team_id = t.team_id
-    WHERE p.region = 'INTL';
-    """)
-    intl_players = cursor.fetchall()
-
-    updated_count = 0
-    for player_id, team_acronym in intl_players:
-        if team_acronym in team_regions:
-            new_region = team_regions[team_acronym]
-            # Update the region for this player
-            cursor.execute("""
-            UPDATE players
-            SET region = %s
-            WHERE player_id = %s AND region = 'INTL';
-            """, (new_region, player_id))
-            
-            updated_count += 1
-            logging.info(f"Updated region for player {player_id} (team {team_acronym}) to {new_region}")
-        else:
-            logging.warning(f"No region mapping found for team acronym {team_acronym} (player {player_id})")
-
-    conn.commit()
-    logging.info(f"Updates completed. {updated_count} players updated.")
-
-    # Check for any remaining 'INTL' players
-    cursor.execute("SELECT COUNT(*) FROM players WHERE region = 'INTL';")
-    remaining_intl = cursor.fetchone()[0]
-    if remaining_intl > 0:
-        logging.warning(f"There are still {remaining_intl} players with 'INTL' region.")
-    else:
-        logging.info("All 'INTL' regions have been updated successfully.")
+    # Connect to the database
+    conn = psycopg2.connect(os.getenv('RDS_DATABASE_URL'))
+    cursor = conn.cursor()
+    
+    # Add the games_played column
+    create_games_played_column()
+    
+    # Count and update games played
+    count_games_played()
+    
+    logging.info("Script completed successfully")
 
 except Exception as e:
-    conn.rollback()
     logging.error(f"An error occurred: {e}")
 
 finally:
-    cursor.close()
-    conn.close()
+    if cursor:
+        cursor.close()
+    if conn:
+        conn.close()
     logging.info("Database connection closed")

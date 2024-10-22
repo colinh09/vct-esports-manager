@@ -1,24 +1,27 @@
 import uuid
 import asyncio
 import sys
+import os
+
+from dotenv import load_dotenv
 from typing import Optional, List, Dict, Any
 from multi_agent_orchestrator.orchestrator import MultiAgentOrchestrator, OrchestratorConfig
 from multi_agent_orchestrator.agents import AgentResponse, ChainAgent, ChainAgentOptions
-from multi_agent_orchestrator.classifiers import BedrockClassifier, BedrockClassifierOptions
+from multi_agent_orchestrator.classifiers import BedrockClassifier, BedrockClassifierOptions, AnthropicClassifier, AnthropicClassifierOptions
 
 from input_parser_agent import create_vct_input_parser
 from sql_agent import create_valorant_agent
 from final_agent import create_vct_final_agent
+from general_agent import setup_player_info_agent
 
-# Create a custom Bedrock classifier
-custom_bedrock_classifier = BedrockClassifier(BedrockClassifierOptions(
-    model_id='anthropic.claude-3-sonnet-20240229-v1:0',
-    region='us-east-1',
-    inference_config={
-        'maxTokens': 500,
-        'temperature': 0.7,
-        'topP': 0.9,
-    }
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
+if not ANTHROPIC_API_KEY:
+    raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
+
+anthropic_classifier = AnthropicClassifier(AnthropicClassifierOptions(
+    api_key=ANTHROPIC_API_KEY
 ))
 
 # Create the orchestrator with the custom classifier
@@ -33,26 +36,27 @@ orchestrator = MultiAgentOrchestrator(
         USE_DEFAULT_AGENT_IF_NONE_IDENTIFIED=True,
         MAX_MESSAGE_PAIRS_PER_AGENT=10
     ),
-    classifier=custom_bedrock_classifier
+    classifier=anthropic_classifier
 )
 
 # Create the agents
-vct_input_parser = create_vct_input_parser()
-valorant_agent = create_valorant_agent()
-final_agent = create_vct_final_agent()
+# vct_input_parser = create_vct_input_parser()
+# valorant_agent = create_valorant_agent()
+# final_agent = create_vct_final_agent()
+player_agent = setup_player_info_agent()
 
-# Create the ChainAgent
-chain_options = ChainAgentOptions(
-    name='VCTChainAgent',
-    description='A chain of agents for processing Valorant esports queries',
-    agents=[vct_input_parser, valorant_agent, final_agent],
-    default_output='The chain processing encountered an issue.',
-    save_chat=True
-)
-chain_agent = ChainAgent(chain_options)
+# # Create the ChainAgent
+# chain_options = ChainAgentOptions(
+#     name='VCTChainAgent',
+#     description='A chain of agents for processing Valorant esports queries',
+#     agents=[vct_input_parser, valorant_agent, final_agent],
+#     default_output='The chain processing encountered an issue.',
+#     save_chat=True
+# )
+# chain_agent = ChainAgent(chain_options)
 
 # Add the chain agent to the orchestrator
-orchestrator.add_agent(vct_input_parser)
+orchestrator.add_agent(player_agent)
 
 async def handle_request(_orchestrator: MultiAgentOrchestrator, _user_input: str, _user_id: str, _session_id: str):
     response: AgentResponse = await _orchestrator.route_request(_user_input, _user_id, _session_id)

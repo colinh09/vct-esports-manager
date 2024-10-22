@@ -9,8 +9,8 @@ class ValorantAgentCallbacks(AgentCallbacks):
 def create_valorant_agent():
     # Define a custom configuration with increased timeouts
     custom_config = Config(
-        connect_timeout=120,
-        read_timeout=120, 
+        connect_timeout=500,
+        read_timeout=500, 
         retries={'max_attempts': 3}
     )
 
@@ -20,7 +20,7 @@ def create_valorant_agent():
         name='sql-vct-agent',
         description='Agent for providing Valorant esports statistics and player information',
         agent_id='MOB0OFJEEO',
-        agent_alias_id='S3EODLTXM8',
+        agent_alias_id='TSTALIASID',
         region='us-east-1',
         client=custom_client 
     ))

@@ -8,20 +8,24 @@ from io import BytesIO
 import requests
 from dotenv import load_dotenv
 from heuristic import process_game_file  # Import the function directly
-
+import traceback
 load_dotenv()
 
 DATABASE_URL = os.getenv("RDS_DATABASE_URL")
 BASE_DATA_DIR = "/home/colin/vct-esports-manager/data"
 S3_BUCKET_URL = "https://vcthackathon-data.s3.us-west-2.amazonaws.com"
+LOGS_DIR = "logs"  # New constant for logs directory
 
-# Set up logging
-logger = logging.getLogger('player_stats_update_international')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler('player_stats_update_chall.log')
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+def setup_logger(log_name):
+    if not os.path.exists(LOGS_DIR):
+        os.makedirs(LOGS_DIR)
+    logger = logging.getLogger(log_name)
+    logger.setLevel(logging.INFO)
+    handler = logging.FileHandler(os.path.join(LOGS_DIR, f'{log_name}.log'))
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
 
 def create_connection():
     try:
@@ -30,7 +34,7 @@ def create_connection():
         logger.error(f"Error connecting to database: {e}")
         return None
 
-def download_and_process_game(tournament, year, platform_game_id, connection):
+def download_and_process_game(tournament, year, platform_game_id, connection, logger):
     try:
         directory = f"{BASE_DATA_DIR}/{tournament}/games/{year}"
         file_path = f"{directory}/{platform_game_id}.json"
@@ -46,7 +50,7 @@ def download_and_process_game(tournament, year, platform_game_id, connection):
 
             # Process the game file using the imported function
             player_stats = process_game_file(file_path)
-            update_player_stats(connection, platform_game_id, player_stats)
+            update_player_stats(connection, platform_game_id, player_stats, logger)
             logger.info(f"Processed: {platform_game_id}.json")
 
             os.remove(file_path)
@@ -56,10 +60,11 @@ def download_and_process_game(tournament, year, platform_game_id, connection):
             logger.error(f"Failed to download {platform_game_id}.json")
             return False
     except Exception as e:
-        logger.error(f"Error processing game {platform_game_id}: {e}")
-        return False
+        error_message = f"Error processing game {platform_game_id}:\n{traceback.format_exc()}"
+        logger.error(error_message)
+        raise SystemExit(error_message)
 
-def update_player_stats(connection, platform_game_id, player_stats):
+def update_player_stats(connection, platform_game_id, player_stats, logger):
     cursor = connection.cursor()
     try:
         for player_id, stats in player_stats.items():
@@ -95,7 +100,7 @@ def update_player_stats(connection, platform_game_id, player_stats):
     finally:
         cursor.close()
 
-def update_player_statistics(tournament_type):
+def update_player_statistics(tournament_type, logger, start_from=0):
     connection = create_connection()
     if connection is None:
         logger.error("Could not connect to the database.")
@@ -112,21 +117,24 @@ def update_player_statistics(tournament_type):
 
     years = [2022, 2023, 2024] if tournament_type != "vct-challengers" else [2023, 2024]
     total_games = len(mappings_data)
-    processed_games = 0
 
-    for esports_game in mappings_data:
+    for i, esports_game in enumerate(mappings_data):
+        current_game = i + 1  # This represents the actual game number
+        
+        if current_game < start_from:
+            continue
+
         platform_game_id = esports_game["platformGameId"]
-        processed_games += 1
 
         for year in years:
-            if download_and_process_game(tournament_type, year, platform_game_id, connection):
-                logger.info(f"Processed game {processed_games}/{total_games}: {platform_game_id} (Year: {year})")
+            if download_and_process_game(tournament_type, year, platform_game_id, connection, logger):
+                logger.info(f"Processed game {current_game}/{total_games}: {platform_game_id} (Year: {year})")
                 break
         else:
             logger.warning(f"Game {platform_game_id} not found in any year directory")
 
-        if processed_games % 10 == 0:
-            logger.info(f"----- Processed {processed_games}/{total_games} games")
+        if current_game % 10 == 0:
+            logger.info(f"----- Processed up to game {current_game}/{total_games}")
 
     logger.info(f"Player statistics update complete for {tournament_type}.")
     connection.close()
@@ -138,6 +146,8 @@ if __name__ == "__main__":
     print("3: game-changers")
 
     tournament_choice = input("Select the tournament by number: ").strip()
+    log_name = input("Enter the desired log name (without .log extension): ").strip()
+    start_from = int(input("Enter the game number to start from (1 to start from beginning): ").strip())
 
     tournament_map = {
         "1": "vct-international",
@@ -148,9 +158,10 @@ if __name__ == "__main__":
     tournament_type = tournament_map.get(tournament_choice)
 
     if tournament_type:
-        logger.info(f"Starting player statistics update for {tournament_type}")
-        update_player_statistics(tournament_type)
+        logger = setup_logger(log_name)
+        logger.info(f"Starting player statistics update for {tournament_type} from game {start_from}")
+        update_player_statistics(tournament_type, logger, start_from)
         logger.info(f"Completed player statistics update for {tournament_type}")
     else:
         print("Invalid selection.")
-        logger.error(f"Invalid tournament selection: {tournament_choice}")
+        print(f"Invalid tournament selection: {tournament_choice}")

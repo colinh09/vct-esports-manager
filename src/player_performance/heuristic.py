@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Dict, List, Any
+import ijson
 
 def load_mappings(file_path, agents_file_path, weapons_file_path):
     with open(file_path, 'r') as f:
@@ -286,8 +287,20 @@ def parse_event(event_type: str, event_data: Dict[str, Any], player_map: Dict[st
             if len(alive_players) == 1 and not alive_players[0].in_clutch_scenario:
                 clutch_player = alive_players[0]
                 clutch_player.in_clutch_scenario = True
-                enemy_team_id = next(tid for tid in team_players.keys() if tid != team_id)
-                clutch_player.enemies_alive_at_clutch_start = len(team_players[enemy_team_id])
+                
+                # Find the enemy team ID safely
+                enemy_team_id = None
+                for tid in team_players.keys():
+                    if tid != team_id:
+                        enemy_team_id = tid
+                        break
+                
+                # Only set enemies_alive_at_clutch_start if we found an enemy team
+                if enemy_team_id is not None:
+                    clutch_player.enemies_alive_at_clutch_start = len(team_players[enemy_team_id])
+                else:
+                    # Handle the case where no enemy team is found
+                    clutch_player.enemies_alive_at_clutch_start = 0
         
         return f"{killer_name} killed {victim_name}{assist_str}.{econ_kill_str}{first_blood_str}{multi_kill_str}"
 
@@ -354,43 +367,54 @@ def process_game_file(file_path):
     weapons_file = os.path.join(script_dir, 'weapons.json')
     mappings = load_mappings(mappings_file, agents_file, weapons_file)
 
-    with open(file_path, 'r') as f:
-        game_data = json.load(f)
-    
-    config_event = next((event for event in game_data if 'configuration' in event), None)
-    if config_event:
-        config_info, player_map, team_players = parse_configuration(config_event['configuration'], mappings)
-    else:
-        print("Warning: No configuration event found.")
-        player_map = {}
-        team_players = {}
-    
+    player_map = {}
+    team_players = {}
     current_round = 0
     attacking_team = None
     current_time = 0
     is_first_kill = True
-    
-    for event in game_data:
-        if 'roundStarted' in event:
-            current_round = safe_get(event['roundStarted'], 'roundNumber')
-            attacking_team = event['roundStarted']['spikeMode']['attackingTeam']['value']
+    final_snapshot = None
+    platform_game_id = None
+    processed_config = False
+    event_counts = {
+        'configuration': 0,
+        'playerDied': 0,
+        'spikeStatus': 0,
+        'damageEvent': 0,
+        'playerRevived': 0,
+        'abilityUsed': 0
+    }
+
+    with open(file_path, 'rb') as file:
+        events = ijson.items(file, 'item')
+        
+        for event in events:
+            if 'configuration' in event and not processed_config:
+                config_info, player_map, team_players = parse_configuration(event['configuration'], mappings)
+                print(player_map)
+                processed_config = True
+                event_counts['configuration'] += 1
             
-            for player in player_map.values():
-                player.reset_round_stats()
+            elif 'roundStarted' in event:
+                current_round = safe_get(event['roundStarted'], 'roundNumber')
+                attacking_team = event['roundStarted']['spikeMode']['attackingTeam']['value']
+                for player in player_map.values():
+                    player.reset_round_stats()
+                is_first_kill = True
             
-            is_first_kill = True
-        
-        wall_time = safe_get(event, 'metadata', 'wallTime')
-        
-        if 'snapshot' in event:
-            current_time += 1
-        
-        for event_type, event_data in event.items():
-            if event_type not in ['metadata', 'configuration', 'roundStarted', 'roundEnded', 'platformGameId', 'observerTarget']:
-                parse_event(event_type, event_data, player_map, True, mappings, attacking_team, current_time, is_first_kill)
-                if event_type == 'playerDied':
-                    is_first_kill = False
-    
+            elif 'snapshot' in event:
+                final_snapshot = event['snapshot']
+                current_time += 1
+            
+            else:
+                for event_type, event_data in event.items():
+                    if event_type in event_counts:
+                        event_counts[event_type] += 1
+                    if event_type not in ['metadata', 'roundEnded', 'observerTarget']:
+                        parse_event(event_type, event_data, player_map, True, mappings, attacking_team, current_time, is_first_kill)
+                        if event_type == 'playerDied':
+                            is_first_kill = False
+
     # Calculate final scores
     player_stats = {}
     for player_id, player in player_map.items():
@@ -417,7 +441,6 @@ def process_game_file(file_path):
             'final_score': round(player.score, 2),
             'normalized_score': round(player.normalized_score, 2)
         }
-    
     
     return player_stats
 
@@ -459,7 +482,7 @@ def calculate_player_score(player: Player, heuristic: Dict[str, Any]) -> float:
     return score
 
 if __name__ == "__main__":
-    default_input_file = "/home/colin/vct-esports-manager/data/test-files/sample/sample.json"
+    default_input_file = "/home/colin/vct-esports-manager/data/test-files/g2vsprx_g1/G2vsPRXg1.json"
     
     player_stats = process_game_file(default_input_file)
     print(json.dumps(player_stats, indent=2))

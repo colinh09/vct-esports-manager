@@ -1,27 +1,19 @@
-import sys
-import uuid
-from vct_agent import process_vct_query_sync
+from multi_agent_orchestrator.agents import BedrockLLMAgent, BedrockLLMAgentOptions
 
-def main():
-    print("Welcome to the interactive VCT Query System. Type 'quit' to exit.")
-    
-    user_id = "user123"
-    session_id = str(uuid.uuid4())  # Generate a session ID for the entire conversation
-    
-    print(f"Session ID: {session_id}")
-    
-    while True:
-        user_input = input("\nYou: ").strip()
-        if user_input.lower() == 'quit':
-            print("Exiting the program. Goodbye!")
-            sys.exit()
-        
-        result = process_vct_query_sync(user_input, user_id, session_id)
-        
-        print("\nMetadata:")
-        print(f"Selected Agent: {result['agent_name']}")
-        print(f"Is Streaming: {result['is_streaming']}")
-        print(f"Response: {result['content']}")
+def create_test_agent():
+    test_agent = BedrockLLMAgent(BedrockLLMAgentOptions(
+        name='vct-input-parser',
+        description='An agent that will fetch data from database',
+        model_id='ai21.jamba-1-5-mini-v1:0',
+        region='us-east-1',
+        streaming=False,
+        inference_config={
+            'maxTokens': 500,
+            'temperature': 0.1,
+            'topP': 0.9,
+            'stopSequences': ['Human:', 'AI:']
+        },
+        save_chat = False,
+    ))
 
-if __name__ == "__main__":
-    main()
+    return test_agent
