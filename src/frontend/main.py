@@ -20,7 +20,9 @@ async def initialize_and_test():
     return vct_system
 
 async def async_main():
-    vct_system = await initialize_and_test()
+    # vct_system = await initialize_and_test()
+    vct_system = VCTAgentSystem()
+    await vct_system.switch_to_anthropic_classifier()
     
     print("VCT Agent System is ready.")
     print("Welcome to the interactive VCT Query System. Type 'quit' to exit.")
