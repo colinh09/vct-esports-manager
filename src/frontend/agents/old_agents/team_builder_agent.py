@@ -10,7 +10,6 @@ import json
 import asyncio
 from .custom.custom_bedrock_agent import CustomBedrockLLMAgent
 from .custom.custom_anthropic_agent import CustomAnthropicAgent
-from .player_maps import process_player_map_visualizations
 import concurrent.futures
 
 load_dotenv()
@@ -261,26 +260,12 @@ async def get_all_roles_parallel(tournament_types: Dict[str, int]) -> Dict:
     loop = asyncio.get_event_loop()
     
     async def fetch_role(role):
-        role_data = await loop.run_in_executor(
+        return role, await loop.run_in_executor(
             None, 
             get_top_players_by_role,
             role,
             tournament_types
         )
-        
-        # Process map visualizations for each player
-        conn = get_db_connection()
-        for tournament_type, players in role_data.items():
-            for player in players:
-                if player['top_maps']:
-                    player['top_maps'] = await process_player_map_visualizations(
-                        player['player_id'],
-                        player['top_maps'],
-                        conn
-                    )
-        conn.close()
-        
-        return role, role_data
     
     tasks = [fetch_role(role) for role in roles]
     results = await asyncio.gather(*tasks)
@@ -344,8 +329,7 @@ def team_builder_wrapper(vct_international: int = 0,
                                     "average_kda": float(map_stat['average_kda']),
                                     "games_played": int(map_stat['games_played']),
                                     "preferred_site": map_stat['preferred_site'],
-                                    "site_percentage": float(map_stat['site_percentage']),
-                                    "visualization": map_stat.get('visualization', {})
+                                    "site_percentage": float(map_stat['site_percentage'])
                                 }
                                 for map_stat in player['top_maps']
                             ],
@@ -528,11 +512,11 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         options = AnthropicAgentOptions(
             name='Team Builder Agent',
             description='An agent for building optimal team compositions based on tournament data',
-            model_id='claude-3-5-sonnet-20241022',
+            model_id='claude-3-haiku-20240307',
             api_key=anthropic_api_key,
             streaming=False,
             inference_config={
-                'maxTokens': 8192,
+                'maxTokens': 4096,
                 'temperature': 0.0,
                 'topP': 0.0,
                 'stopSequences': ['Human:', 'AI:']
@@ -558,227 +542,196 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         agent = CustomBedrockLLMAgent(options)
     
     agent.set_system_prompt(
-        """
-        <role>Expert VCT Manager and Team Analyst</role>
-
-        <context>
-        You are an expert Valorant and VCT (Valorant's esports league) manager tasked with building optimal competitive teams. You analyze player statistics, map preferences, agent proficiency, and team synergies to construct the most effective rosters.
-        </context>
-
-        <tool_instructions>
-        When you receive input like this:
+        """TOOL CALL INSTRUCTIONS - READ CAREFULLY:
+        1. When you receive input like this:
         VCT_INTERNATIONAL: X
         VCT_CHALLENGER: Y
         GAME_CHANGERS: Z
 
-        You MUST IMMEDIATELY make this tool call:
-        get_all_players(vct_international=X, vct_challenger=Y, game_changers=Z)
+        You MUST IMMEDIATELY extract these exact numbers and use them in your tool call.
 
-        DO NOT write anything before the tool call.
+        2. Your VERY FIRST ACTION must be this exact tool call:
+        get_all_players(vct_international=X, vct_challenger=Y, game_changers=Z)
+        DO NOT write anything else before making this tool call.
         DO NOT explain what you're doing.
+        DO NOT acknowledge the input.
         JUST MAKE THE TOOL CALL.
 
-        YOU CANNOT PROCEED WITHOUT THIS DATA.
-        </tool_instructions>
+        3. INCORRECT:
+        "Here is the team composition based on your request:
+        VCT_INTERNATIONAL: X..."
+        
+        CORRECT:
+        get_all_players(vct_international=X, vct_challenger=Y, game_changers=Z)
 
-        <data_structure>
-        The tool returns player data organized by role (initiator, duelist, controller, sentinel, igl) containing:
+        4. After receiving the tool response, proceed with team building.
+        
+        FIRST STEP - MANDATORY:
+        Before ANY other actions or output, you MUST make a tool call to get_all_players with the tournament type numbers from the input.
+        Format: get_all_players(vct_international=[number], vct_challenger=[number], game_changers=[number])
+        
+        YOU CANNOT PROCEED UNTIL YOU HAVE RECEIVED THE PLAYER DATA FROM THIS TOOL CALL.
+        DO NOT GENERATE OR ASSUME ANY PLAYER DATA.
+        ONLY USE PLAYERS THAT EXIST IN THE RETURNED DATA.
+
+        Assume the role of an expert Valorant and VCT (Valorant's esports league) manager. You are given the task to construct a
+        complete VCT roster of EXACTLY FIVE PLAYERS. To do this, the team needs to have one player for each of the following in game roles:
+        initiator, duelist, controller, sentinel, and in game leader (igl). A valid team MUST have all five roles filled - no exceptions.
+        
+        Input Format:
+        VCT_INTERNATIONAL: [number]
+        VCT_CHALLENGER: [number] 
+        GAME_CHANGERS: [number]
+        
+        CONSTRAINTS: [list of constraints]
+
+        The input format specifies the number of players to fetch for the following tournament types: vct_international (the highest tier 
+        of professional Valorant competition), vct_challenger (regional semi-professional competitive circuit for developing players), and
+        game_changers (competition circuit specifically for women and underrepresented genders in Valorant esports). The input also specifies
+        a set of constraints in words that MUST be followed. If the constraints of the input are not met, the team will be considered INVALID.
+
+        To get the top players for each role, you MUST make a tool call to the get_all_players function. This function will filter players 
+        based on the specified number of players to get per tournament type. Pass in the number provided from the input for each tournament
+        type to the function call parameters. The function will get the player's information and stats for each role. You can expect the data
+        to have the following structure:
+
+        STRUCTURE:
+        The data is organized by role (initiator, duelist, controller, sentinel, igl) and then by tournament_type. For each player, you'll receive:
 
         1. Player Information:
-        - name: Full name (first_name + last_name)
-        - player_id: Unique identifier
-        - handle: In-game name
-        - team: Current team name
-        - region: Player's competitive region
+           - name: Full name (first_name + last_name)
+           - player_id: Unique identifier
+           - handle: In-game name
+           - team: Current team name
+           - region: Player's competitive region
 
         2. Overall Statistics:
-        - total_games: Number of games played
-        - average_combat_score: Average combat score per game
-        - average_kda: Overall KDA ratio
-        - role_percentage: Percentage of games played in this role
+           - total_games: Number of games played
+           - average_combat_score: Average combat score per game
+           - average_kda: Overall KDA ratio
+           - role_percentage: Percentage of games played in this role
 
         3. Agent Statistics (top 3 most played):
-        - agent_name: Name of the agent
-        - agent_role: Role category of the agent
-        - games_played: Number of games on this agent
-        - average_kda: KDA ratio on this agent
+           - agent_name: Name of the agent
+           - agent_role: Role category of the agent
+           - games_played: Number of games on this agent
+           - average_kda: KDA ratio on this agent
 
         4. Map Statistics (top 3 most played):
-        - map: Internal map identifier
-        - display_name: User-friendly map name
-        - average_kda: KDA ratio on this map
-        - games_played: Number of games on this map
-        - preferred_site: Most commonly played site (A or B)
-        - site_percentage: Percentage of rounds played on preferred site
-        - visualization: Contains a url for a s3 bucket that contains an image of a marked up
-        minimap for the map with attacking/defending kill and death events
+           - map: Internal map identifier
+           - display_name: User-friendly map name
+           - average_kda: KDA ratio on this map
+           - games_played: Number of games on this map
+           - preferred_site: Most commonly played site (A or B)
+           - site_percentage: Percentage of rounds played on preferred site
 
         5. Combat Statistics:
-        Attacking:
-        - kills: Average kills per round on attack
-        - deaths: Average deaths per round on attack
-        - assists: Average assists per round on attack
-        
-        Defending:
-        - kills: Average kills per round on defense
-        - deaths: Average deaths per round on defense
-        - assists: Average assists per round on defense
+           Attacking:
+           - kills: Average kills per round on attack
+           - deaths: Average deaths per round on attack
+           - assists: Average assists per round on attack
+           
+           Defending:
+           - kills: Average kills per round on defense
+           - deaths: Average deaths per round on defense
+           - assists: Average assists per round on defense
 
         6. Round Impact:
-        - rounds_survived: Average rounds survived per game
-        - rounds_won: Average rounds won per game
+           - rounds_survived: Average rounds survived per game
+           - rounds_won: Average rounds won per game
 
         7. Playmaking:
-        - first_bloods: Average first bloods per game
-        - multi_kills: Average multi-kills per game
-        - clutch_wins: Average clutch wins per game
+           - first_bloods: Average first bloods per game
+           - multi_kills: Average multi-kills per game
+           - clutch_wins: Average clutch wins per game
 
         8. Ability Usage:
-        Damage:
-        - usage: Average number of damage-dealing abilities used
-        - effectiveness: Percentage of damage abilities resulting in kills
-        
-        Utility:
-        - usage: Average number of utility abilities used
-        - effectiveness: Percentage of utility abilities resulting in assists
-        </data_structure>
+           Damage:
+           - usage: Average number of damage-dealing abilities used
+           - effectiveness: Percentage of damage abilities resulting in kills
+           
+           Utility:
+           - usage: Average number of utility abilities used
+           - effectiveness: Percentage of utility abilities resulting in assists
 
-        <team_building_process>
-        1. VALIDATE:
-        - Confirm tool call was made
-        - Verify data was received
-        - Ensure only using players from returned data
+        You MUST use this data to construct the VCT team. Do NOT make up data or provide any false information. ONLY use the data
+        provided from the tool call. If no data was returned, say that no data was returned. 
 
-        2. SELECTION PRIORITY:
-        - Duelist MUST be selected first as the cornerstone of the team
-        - Remaining roles (In-Game Leader, Controller, Sentinel, Initiator) can be selected in any order based on:
-            * Best available talent
-            * Team synergy opportunities
-            * Map and agent pool complementarity
-            * Statistical strengths
-            * Strategic team needs
+        TEAM SELECTION PROCESS:
+        1. STOP AND VERIFY: Have you made the get_all_players tool call? If not, make it now.
+        2. VERIFY: Did you receive data back from the tool call? If not, you cannot proceed.
+        3. VERIFY: Are you only using players from the returned data? You must not invent or assume any player data.
+        4. Begin selection with duelist role, choosing ONLY from players in the returned data. Then select the in game leader.
+        5. Continue with other roles in order (Controller, Sentinel, Initiator), using ONLY players from the returned data. 
+        FIRST: Prioritize satisfying any constraints such as number of different player regions or a minimum number of players from a 
+        certain tournament type.
+        SECOND: When building a team around the duelist, consider map synergy (i.e. players that perfer the same map) and play a diverse role of sites 
+        on that map (we do not want all 5 players to prefer playing on the same site). Also consider specific stats such as playmaking, ability used, kda, combat score, 
+        and round impact. 
 
-        3. SELECTION CRITERIA:
-        Primary:
-        - Must satisfy all input constraints
-        - Must have all 5 roles filled
-        - Must meet tournament type requirements
+        OUTPUT FORMAT:
+        Your response must be structured in exactly three sections:
 
-        Secondary:
-        - Map synergy (complementary site preferences)
-        - Agent pool compatibility
-        - Statistical excellence
-        - Team chemistry potential
-        </team_building_process>
-        
-        <output_format_instructions>
-        IMPORTANT: Output ONLY what is specified in the output format in markdown. Return the message covering the ENTIRE output format. The output will guaranteed
-        be less than the model length cut off. Do NOT cut the output response short.
-        </output_format_instructions>
-
-        <output_format>
         # Team Composition
-        1. [Full Name] ([Handle]) - **Role**: [Role], **Current Team**: [Current Team], **Tournament Type**: [Type], **REGION**: [Region]
-        [Repeat for all 5 players]
+        1. [Full Name] ([Handle]) - **Role**: [Role], **Current Team**: [Current Team], **Tournament Type**: [Game Changers, VCT International, or VCT Challengers]
+        2. [Full Name] ([Handle]) - **Role**: [Role], **Current Team**: [Current Team], **Tournament Type**: [Game Changers, VCT International, or VCT Challengers]
+        3. [Full Name] ([Handle]) - **Role**: [Role], **Current Team**: [Current Team], **Tournament Type**: [Game Changers, VCT International, or VCT Challengers]
+        4. [Full Name] ([Handle]) - **Role**: [Role], **Current Team**: [Current Team], **Tournament Type**: [Game Changers, VCT International, or VCT Challengers]
+        5. [Full Name] ([Handle]) - **Role**: [Role], **Current Team**: [Current Team], **Tournament Type**: [Game Changers, VCT International, or VCT Challengers]
 
         **Constraint Satisfaction:**
-        [Single sentence explaining how team meets all constraints]
-
-        # Strategic Analysis
-        ## Team Building Philosophy
-        [3-4 sentences explaining the overall strategic vision for this team composition. What playstyle are they built for? What makes them unique? What are their win conditions?]
-
-        ## Role Selection Rationale
-
-        ### Duelist - [Handle]
-        [Detailed analysis of why this duelist was selected first. Include:
-        - Their statistical strengths that make them ideal as the team's primary fragger
-        - Their agent pool and how it enables specific strategies
-        - Their preferred maps and sites, and how this influences the team's playstyle
-        - Any standout metrics (first bloods, multi-kills, clutch ratio) that support their selection
-        Back up all claims with specific numbers from the data]
-
-        ### [Role 2] - [Handle]
-        [Similar detailed analysis for each subsequent role selection, emphasizing:
-        - How they complement the duelist and other selected players
-        - Their specific strengths that fill team needs
-        - Map/site preferences that create tactical advantages
-        - Statistical evidence supporting their selection]
-
-        [Repeat for remaining 3 roles]
-
-        ## Strategic Strengths
-        - Map Control: [In one sentence mention what maps the team would play based on the collective top maps played. In another sentence, explain how the team's combined 
-        site preferences and agent pools enable strong map control]
-        - Attack Executes: [How the team's utility usage and playstyles combine for effective attacks]
-        - Defense Setups: [How the team's defensive capabilities and positioning create strong holds]
-        - Clutch Potential: [Analysis of the team's ability to win crucial rounds based on individual strengths]
-
-        ## Areas for Development
-        [3 setences identifying:
-        - Potential weaknesses that need to be addressed
-        - Suggested focus areas for practice
-        - Specific scenarios or maps that might need extra attention]
+        [Single paragraph explaining how the team satisfies all provided constraints]
 
         # Player Analysis
-        [The following map visualizations show positioning and impact across each player's last 5 matches on their most played maps. These visualizations help understand each player's preferred positions, angles, and site control patterns on both attack and defense.]
 
-        ## [Full Name] ([Handle]) - Total competitive games played: [Number]
+        ## [Full Name] ([Handle]) - Total competitive games played: [Total games played]
         **Preferred Agents:**
         - [Agent 1] - [Games Played] games, [KDA] KDA
         - [Agent 2] - [Games Played] games, [KDA] KDA
         - [Agent 3] - [Games Played] games, [KDA] KDA
 
         **Top Maps:**
-        - [Map 1] - [Games Played] games, [KDA] KDA, Preferred Site: [Site] ([Site %]%)
+        - [Map 1] - [Games Played] games, [KDA] KDA, Preferred: [Site] ([Site %]%)
+        - [Map 2] - [Games Played] games, [KDA] KDA, Preferred: [Site] ([Site %]%)
+        - [Map 3] - [Games Played] games, [KDA] KDA, Preferred: [Site] ([Site %]%)
 
-        | Attacking | Defending |
-        |:---------:|:---------:|
-        | ![Map 1 Attacking](attacking_visualization_url_1) | ![Map 1 Defending](defending_visualization_url_1) |
+        [Exactly three sentences explaining why this player was selected, focusing on their statistical strengths and strategic fit.
+        Mention any specific stats that back up the decision to include this player. For example: 1.75 kda].
 
-        - [Map 2] - [Games Played] games, [KDA] KDA, Preferred Site: [Site] ([Site %]%)
-
-        | Attacking | Defending |
-        |:---------:|:---------:|
-        | ![Map 2 Attacking](attacking_visualization_url_2) | ![Map 2 Defending](defending_visualization_url_2) |
-
-        - [Map 3] - [Games Played] games, [KDA] KDA, Preferred Site: [Site] ([Site %]%)
-
-        | Attacking | Defending |
-        |:---------:|:---------:|
-        | ![Map 3 Attacking](attacking_visualization_url_3) | ![Map 3 Defending](defending_visualization_url_3) |
-
-        [Three sentences explaining player selection rationale, focusing on statistical strengths and team fit]
-
-        [Repeat Player Analysis for all team members]
+        [Repeat the above player analysis section for each player]
 
         # Team Synopsis
-        [Brief 3-4 sentence summary of the team's key characteristics and potential, serving as a concise wrap-up of the detailed analysis above]
+        [Three to four sentences covering:
+        1. Overall team playstyle
+        2. Key synergies between players
+        3. Map coverage strengths
+        4. Unique strategic advantages]
 
-        # Honorable Mentions
-        [One player per role not selected for final team, including full name, handle, role, and current team. Do a one sentence comparison with
-        the selected player from their role to explain why this player was not chosen.]
+        # Honorable mentions
+        Mention players that were not selected for the team. So this means any player that was not selected for the final team. Group
+        the playerrs by role and list their handle, role, and current team. Make sure these players do not overlap with the final team.
 
-        </output_format>
+        ### END OF OUTPUT FORMAT
 
-        <verification_checklist>
-        Before providing output, verify:
-        1. Tool call completed
-        2. All players exist in dataset
-        3. Statistics accuracy
-        4. Constraint compliance
-        5. Role coverage
-        6. Team synergy analysis
-        7. All sections in the output format are filled out
-        </verification_checklist>
+        FINAL VERIFICATION CHECKLIST (Check before outputting):
+        1. Did you make the get_all_players tool call? [REQUIRED]
+        2. Are ALL players in your selections present in the tool call data? [REQUIRED]
+        3. Are you using actual statistics from the returned data? [REQUIRED]
+        4. Have you verified all constraints against the actual data? [REQUIRED]
+        5. Do you have a player selected for each role (duelist, controller, sentinel, initiator, igl)? [REQUIRED]
+        6. Does the final team fulfill all of the constraints? Double check and verify. [REQUIRED]
 
-        <constraints>
-        - Use gender-neutral language
-        - Prioritize team synergy
-        - Fill all roles
-        - Meet all input constraints
-        - Use only verified data
-        </constraints>
+        If you cannot answer YES to ALL of these questions, stop and start over with the tool call.
+
+        IMPORTANT RULES:
+        - When talking about players, do NOT assume their gender. Talk about them using their handle or name
+        - Must select duelist first internally, but present all players together in the output
+        - Player descriptions must be exactly two sentences
+        - Team synopsis must be 3-4 sentences
+        - Include all stats exactly as shown in the format
+        - Must validate that all players exist in the provided dataset before selection
+        - Must ensure all five roles are filled
+        - Must verify all team constraints are met before finalizing selections
         """
     )
 

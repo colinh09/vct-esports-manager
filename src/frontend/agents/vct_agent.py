@@ -8,7 +8,7 @@ from multi_agent_orchestrator.agents import AgentResponse, ChainAgent, ChainAgen
 from multi_agent_orchestrator.classifiers import BedrockClassifier, BedrockClassifierOptions, AnthropicClassifier, AnthropicClassifierOptions
 
 from .input_parser_agent import create_vct_input_parser
-from .general_agent import setup_player_info_agent
+from .general_agent import setup_player_analyst_agent
 from .team_builder_agent import setup_team_builder_agent
 from .final_agent import create_vct_final_agent
 
@@ -16,6 +16,8 @@ load_dotenv()
 
 class VCTAgentSystem:
     def __init__(self):
+        self.api_key = os.getenv('ANTHROPIC_API_KEY')
+        self.use_anthropic = False
         self.orchestrator = self._create_orchestrator()
 
     def _create_orchestrator(self, classifier=None):
@@ -45,19 +47,19 @@ class VCTAgentSystem:
         )
 
         chain_agent = self._create_chain_agent()
+        analyst_agent = setup_player_analyst_agent(self.use_anthropic, self.api_key)
         orchestrator.add_agent(chain_agent)
+        orchestrator.add_agent(analyst_agent)
         
         return orchestrator
 
     def _create_chain_agent(self):
-        vct_input_parser = create_vct_input_parser()
-        final_agent = create_vct_final_agent()
-        team_builder_agent = setup_team_builder_agent()
-        player_info_agent = setup_player_info_agent()
-
+        vct_input_parser = create_vct_input_parser(self.use_anthropic, self.api_key)
+        team_builder_agent = setup_team_builder_agent(self.use_anthropic, self.api_key)
+        
         chain_options = ChainAgentOptions(
             name='VCTChainAgent',
-            description='A chain of agents for processing Valorant esports queries',
+            description='This agent is responsible for building VCT teams. If the user mentions constructing a team, use this agent.',
             agents=[vct_input_parser, team_builder_agent],
             default_output='The chain processing encountered an issue.',
             save_chat=True
@@ -86,15 +88,12 @@ class VCTAgentSystem:
             return False
 
     async def switch_to_anthropic_classifier(self):
-        ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
-        if not ANTHROPIC_API_KEY:
-            raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
-        
+        self.use_anthropic = True
         anthropic_classifier = AnthropicClassifier(AnthropicClassifierOptions(
-            api_key=ANTHROPIC_API_KEY
+            api_key=self.api_key,
+            model_id='claude-3-5-sonnet-20241022'
         ))
         
-        # Create a new orchestrator with the Anthropic classifier
         self.orchestrator = self._create_orchestrator(classifier=anthropic_classifier)
 
     async def initialize(self):
