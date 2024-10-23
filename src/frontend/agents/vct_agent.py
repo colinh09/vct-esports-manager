@@ -23,8 +23,8 @@ class VCTAgentSystem:
     def _create_orchestrator(self, classifier=None):
         if classifier is None:
             classifier = BedrockClassifier(BedrockClassifierOptions(
-                model_id='anthropic.claude-3-haiku-20240307-v1:0',
-                region='us-east-1',
+                model_id='anthropic.claude-3-sonnet-20240229-v1:0',
+                region='us-west-2',
                 inference_config={
                     'maxTokens': 500,
                     'temperature': 0.7,

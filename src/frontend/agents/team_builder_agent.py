@@ -106,7 +106,7 @@ def get_top_players_by_role(role: str, tournament_types: Dict[str, int]) -> Dict
                     SELECT 
                         lpi.player_id,
                         COUNT(DISTINCT pm.platform_game_id) as total_games_played,
-                        CAST(AVG(pm.combat_score) AS NUMERIC(10,2)) as avg_combat_score,
+                        CAST(AVG(pm.average_combat_score) AS NUMERIC(10,2)) as avg_combat_score,
                         CAST(AVG((pm.kills::float + pm.assists::float) / NULLIF(pm.deaths::float, 0)) AS NUMERIC(10,2)) as avg_kda
                     FROM latest_player_info lpi
                     JOIN player_mapping pm ON lpi.player_id = pm.player_id
@@ -162,7 +162,7 @@ def get_top_players_by_role(role: str, tournament_types: Dict[str, int]) -> Dict
                         CAST(AVG(pm.deaths_defending) AS NUMERIC(10,2)) as avg_deaths_defending,
                         CAST(AVG(pm.assists_attacking) AS NUMERIC(10,2)) as avg_assists_attacking,
                         CAST(AVG(pm.assists_defending) AS NUMERIC(10,2)) as avg_assists_defending,
-                        CAST(AVG(pm.combat_score) AS NUMERIC(10,2)) as avg_combat_score,
+                        CAST(AVG(pm.average_combat_score) AS NUMERIC(10,2)) as avg_combat_score,
                         
                         -- Round Impact
                         CAST(AVG(pm.rounds_survived) AS NUMERIC(10,2)) as avg_rounds_survived,
@@ -544,11 +544,11 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         options = BedrockLLMAgentOptions(
             name='Team Builder Agent',
             description='An agent for building optimal team compositions based on tournament data',
-            model_id='anthropic.claude-3-sonnet-20240229-v1:0',
-            region='ca-central-1',
+            model_id='anthropic.claude-3-5-sonnet-20240620-v1:0',
+            region='us-west-2',
             streaming=True,
             inference_config={
-                'maxTokens': 4096,
+                'maxTokens': 8192,
                 'temperature': 0.0,
                 'topP': 0.1,
                 'stopSequences': ['Human:', 'AI:']

@@ -86,7 +86,7 @@ def main():
 
         /* Control image sizes in markdown */
         .element-container img {
-            max-width: 300px !important;  /* Adjust this value as needed */
+            max-width: 300px !important;
             height: auto !important;
             display: inline-block !important;
         }
@@ -105,6 +105,10 @@ def main():
         /* Make messages visible */
         .element-container {
             overflow: visible !important;
+        }
+
+        .stChatMessage {
+            font-size: 24px !important;
         }
         </style>
         """,

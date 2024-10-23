@@ -21,7 +21,7 @@ def create_vct_input_parser(use_anthropic=False, anthropic_api_key=None):
             name='vct-input-parser',
             description='An agent to parse and structure VCT-related input, specifically for team building requests.',
             model_id='anthropic.claude-3-sonnet-20240229-v1:0',
-            region='ca-central-1',
+            region='us-west-2',
             streaming=False,
             inference_config={
                 'maxTokens': 500,

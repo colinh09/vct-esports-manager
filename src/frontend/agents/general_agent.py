@@ -18,260 +18,305 @@ def get_db_connection():
     db_url = os.getenv('RDS_DATABASE_URL')
     return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
-def get_player_comprehensive_stats(player_identifier: str = None, is_handle: bool = True) -> Dict:
+def get_player_comprehensive_stats(player_identifier: Optional[str] = None,
+                                 first_name: Optional[str] = None,
+                                 last_name: Optional[str] = None,
+                                 search_type: str = 'handle') -> Dict:
     """
-    Get comprehensive player statistics using either player handle or ID.
-    Uses fuzzy matching for handles.
+    Get comprehensive player statistics using either player handle or name.
+    Uses fuzzy matching for both handle and name searches.
     
     Args:
-        player_identifier (str): Either player handle or ID
-        is_handle (bool): True if player_identifier is a handle, False if it's an ID
+        player_identifier (str, optional): Player handle for handle-based search
+        first_name (str, optional): Player's first name for name-based search
+        last_name (str, optional): Player's last name for name-based search
+        search_type (str): Type of search to perform ('handle' or 'name')
     """
     try:
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # First, get the correct player_id using fuzzy matching if needed
-                if is_handle:
+                if search_type == 'handle':
+                    if not player_identifier:
+                        return {"status": "error", "message": "Player identifier required for handle search"}
+                    
                     player_query = """
-                    SELECT player_id, handle, similarity(LOWER(handle), LOWER(%s)) AS sim
+                    SELECT DISTINCT ON (LOWER(handle)) 
+                        player_id, 
+                        similarity(LOWER(handle), LOWER(%s)) AS sim
                     FROM players
                     WHERE similarity(LOWER(handle), LOWER(%s)) > 0.3
-                    ORDER BY sim DESC
-                    LIMIT 1
-                    """
+                    ORDER BY LOWER(handle), updated_at DESC, sim DESC
+                    LIMIT 1;
+                    """ 
                     cur.execute(player_query, (player_identifier, player_identifier))
-                    player_result = cur.fetchone()
-                    if not player_result:
-                        return {"status": "error", "message": "Player not found"}
-                    player_id = player_result['player_id']
-                else:
-                    player_id = player_identifier
+                else:  # search_type == 'name'
+                    if not first_name and not last_name:
+                        return {"status": "error", "message": "Either first_name or last_name required for name search"}
+                    
+                    player_query = """
+                    SELECT DISTINCT ON (
+                        CASE 
+                            WHEN similarity(LOWER(first_name), LOWER(%s)) > similarity(LOWER(last_name), LOWER(%s))
+                            THEN LOWER(first_name)
+                            ELSE LOWER(last_name)
+                        END
+                    )
+                        player_id,
+                        greatest(
+                            similarity(LOWER(first_name), LOWER(%s)),
+                            similarity(LOWER(last_name), LOWER(%s))
+                        ) AS sim
+                    FROM players
+                    WHERE similarity(LOWER(first_name), LOWER(%s)) > 0.3
+                    OR similarity(LOWER(last_name), LOWER(%s)) > 0.3
+                    ORDER BY 
+                        CASE 
+                            WHEN similarity(LOWER(first_name), LOWER(%s)) > similarity(LOWER(last_name), LOWER(%s))
+                            THEN LOWER(first_name)
+                            ELSE LOWER(last_name)
+                        END,
+                        updated_at DESC,
+                        sim DESC
+                    LIMIT 1;
+                    """
+                    params = [first_name or '', last_name or '', first_name or '', last_name or '']
+                    cur.execute(player_query, params)
+                
+                player_result = cur.fetchone()
+                if not player_result:
+                    return {
+                        "status": "error",
+                        "message": f"Player not found using {'handle' if search_type == 'handle' else 'name'} search"
+                    }
+                
+                player_id = player_result['player_id']
 
                 # Now execute our comprehensive stats query
                 stats_query = """
-WITH player_base AS (
-    SELECT 
-        p.player_id,
-        p.tournament_type,
-        p.handle,
-        p.first_name,
-        p.last_name,
-        p.status,
-        p.photo_url,
-        t.name as team_name,
-        l.region,
-        p.initiator_percentage,
-        p.sentinel_percentage,
-        p.duelist_percentage,
-        p.controller_percentage,
-        p.games_played as total_games_played
-    FROM players p
-    LEFT JOIN teams t ON p.home_team_id = t.team_id
-    LEFT JOIN leagues l ON t.home_league_id = l.league_id
-    WHERE p.player_id = %s
-),
+                    WITH player_base AS (
+                        SELECT 
+                            p.player_id,
+                            p.tournament_type,
+                            p.handle,
+                            p.first_name,
+                            p.last_name,
+                            p.status,
+                            p.photo_url,
+                            t.name as team_name,
+                            l.region,
+                            p.initiator_percentage,
+                            p.sentinel_percentage,
+                            p.duelist_percentage,
+                            p.controller_percentage,
+                            p.games_played as total_games_played
+                        FROM players p
+                        LEFT JOIN teams t ON p.home_team_id = t.team_id
+                        LEFT JOIN leagues l ON t.home_league_id = l.league_id
+                        WHERE p.player_id = %s
+                    ),
 
-agent_stats AS (
-    SELECT 
-        player_id,
-        agent_name,
-        agent_role,
-        COUNT(*) as games_played,
-        AVG(kills::float) as avg_kills,
-        AVG(deaths::float) as avg_deaths,
-        AVG(assists::float) as avg_assists,
-        AVG(combat_score::float) as avg_combat_score,
-        AVG((kills::float + assists::float) / NULLIF(deaths::float, 0)) as kda
-    FROM player_mapping
-    WHERE player_id = %s
-    GROUP BY player_id, agent_name, agent_role
-),
+                    agent_stats AS (
+                        SELECT 
+                            player_id,
+                            agent_name,
+                            agent_role,
+                            COUNT(*) as games_played,
+                            AVG(kills::float) as avg_kills,
+                            AVG(deaths::float) as avg_deaths,
+                            AVG(assists::float) as avg_assists,
+                            AVG(average_combat_score::float) as avg_combat_score,
+                            AVG((kills::float + assists::float) / NULLIF(deaths::float, 0)) as kda
+                        FROM player_mapping
+                        WHERE player_id = %s
+                        GROUP BY player_id, agent_name, agent_role
+                    ),
 
-map_stats AS (
-    SELECT 
-        pmp.player_id,
-        pmp.map,
-        pmp.games_played,
-        pmp.total_kills,
-        pmp.total_deaths,
-        pmp.total_assists,
-        pmp.average_kda,
-        COUNT(DISTINCT pd.platform_game_id) as matches_with_first_blood,
-        COUNT(pd.event_id) FILTER (WHERE pd.killer_id = pmp.player_id) as total_kills_on_map,
-        COUNT(pd.event_id) FILTER (WHERE pd.deceased_id = pmp.player_id) as total_deaths_on_map
-    FROM player_map_performance pmp
-    LEFT JOIN player_died pd ON pmp.player_id = pd.killer_id OR pmp.player_id = pd.deceased_id
-    WHERE pmp.player_id = %s
-    GROUP BY pmp.player_id, pmp.map, pmp.games_played, pmp.total_kills, 
-             pmp.total_deaths, pmp.total_assists, pmp.average_kda
-),
+                    map_stats AS (
+                        SELECT 
+                            pmp.player_id,
+                            pmp.map,
+                            pmp.games_played,
+                            pmp.total_kills,
+                            pmp.total_deaths,
+                            pmp.total_assists,
+                            pmp.average_kda,
+                            COUNT(DISTINCT pd.platform_game_id) as matches_with_first_blood,
+                            COUNT(pd.event_id) FILTER (WHERE pd.killer_id = pmp.player_id) as total_kills_on_map,
+                            COUNT(pd.event_id) FILTER (WHERE pd.deceased_id = pmp.player_id) as total_deaths_on_map
+                        FROM player_map_performance pmp
+                        LEFT JOIN player_died pd ON pmp.player_id = pd.killer_id OR pmp.player_id = pd.deceased_id
+                        WHERE pmp.player_id = %s
+                        GROUP BY pmp.player_id, pmp.map, pmp.games_played, pmp.total_kills, 
+                                pmp.total_deaths, pmp.total_assists, pmp.average_kda
+                    ),
 
-tournament_stats AS (
-    SELECT 
-        pm.player_id,
-        t.tournament_id,
-        t.name as tournament_name,
-        t.year,
-        t.tournament_type,
-        COUNT(DISTINCT pm.platform_game_id) as games_played,
-        AVG(pm.kills::float) as avg_kills,
-        AVG(pm.deaths::float) as avg_deaths,
-        AVG(pm.assists::float) as avg_assists,
-        AVG(pm.combat_score::float) as avg_combat_score
-    FROM player_mapping pm
-    JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
-    JOIN tournaments t ON gm.tournament_id = t.tournament_id
-    WHERE pm.player_id = %s
-    GROUP BY pm.player_id, t.tournament_id, t.name, t.year, t.tournament_type
-),
+                    tournament_stats AS (
+                        SELECT 
+                            pm.player_id,
+                            t.tournament_id,
+                            t.name as tournament_name,
+                            t.year,
+                            t.tournament_type,
+                            COUNT(DISTINCT pm.platform_game_id) as games_played,
+                            AVG(pm.kills::float) as avg_kills,
+                            AVG(pm.deaths::float) as avg_deaths,
+                            AVG(pm.assists::float) as avg_assists,
+                            AVG(pm.average_combat_score::float) as avg_combat_score
+                        FROM player_mapping pm
+                        JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
+                        JOIN tournaments t ON gm.tournament_id = t.tournament_id
+                        WHERE pm.player_id = %s
+                        GROUP BY pm.player_id, t.tournament_id, t.name, t.year, t.tournament_type
+                    ),
 
-tournament_agents AS (
-    SELECT 
-        pm.player_id,
-        t.tournament_id,
-        pm.agent_name,
-        COUNT(*) as agent_games_played,
-        AVG(pm.combat_score::float) as agent_avg_combat_score
-    FROM player_mapping pm
-    JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
-    JOIN tournaments t ON gm.tournament_id = t.tournament_id
-    WHERE pm.player_id = %s
-    GROUP BY pm.player_id, t.tournament_id, pm.agent_name
-),
+                    tournament_agents AS (
+                        SELECT 
+                            pm.player_id,
+                            t.tournament_id,
+                            pm.agent_name,
+                            COUNT(*) as agent_games_played,
+                            AVG(pm.average_combat_score::float) as agent_avg_combat_score
+                        FROM player_mapping pm
+                        JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
+                        JOIN tournaments t ON gm.tournament_id = t.tournament_id
+                        WHERE pm.player_id = %s
+                        GROUP BY pm.player_id, t.tournament_id, pm.agent_name
+                    ),
 
-advanced_stats AS (
-    SELECT 
-        pm.player_id,
-        COUNT(DISTINCT CASE WHEN pm.first_bloods > 0 THEN pm.platform_game_id END) as games_with_first_blood,
-        SUM(pm.first_bloods) as total_first_bloods,
-        SUM(pm.clutch_wins) as total_clutch_wins,
-        COUNT(DISTINCT CASE WHEN pm.clutch_wins > 0 THEN pm.platform_game_id END) as games_with_clutch,
-        SUM(pm.multi_kills) as total_multi_kills,
-        AVG(pm.ability_usage_damaging::float) as avg_damage_ability_usage,
-        AVG(pm.ability_usage_non_damaging::float) as avg_utility_ability_usage,
-        AVG(pm.ability_effectiveness_damaging::float) as avg_damage_effectiveness,
-        AVG(pm.ability_effectiveness_non_damaging::float) as avg_utility_effectiveness
-    FROM player_mapping pm
-    WHERE pm.player_id = %s
-    GROUP BY pm.player_id
-),
+                    advanced_stats AS (
+                        SELECT 
+                            pm.player_id,
+                            COUNT(DISTINCT CASE WHEN pm.first_bloods > 0 THEN pm.platform_game_id END) as games_with_first_blood,
+                            SUM(pm.first_bloods) as total_first_bloods,
+                            SUM(pm.clutch_wins) as total_clutch_wins,
+                            COUNT(DISTINCT CASE WHEN pm.clutch_wins > 0 THEN pm.platform_game_id END) as games_with_clutch,
+                            SUM(pm.multi_kills) as total_multi_kills,
+                            AVG(pm.ability_usage_damaging::float) as avg_damage_ability_usage,
+                            AVG(pm.ability_usage_non_damaging::float) as avg_utility_ability_usage,
+                            AVG(pm.ability_effectiveness_damaging::float) as avg_damage_effectiveness,
+                            AVG(pm.ability_effectiveness_non_damaging::float) as avg_utility_effectiveness
+                        FROM player_mapping pm
+                        WHERE pm.player_id = %s
+                        GROUP BY pm.player_id
+                    ),
 
-recent_games AS (
-    SELECT 
-        pm.player_id,
-        pm.platform_game_id,
-        gm.game_date,
-        gm.map,
-        pm.agent_name,
-        pm.combat_score,
-        pm.kills,
-        pm.deaths,
-        pm.assists,
-        t.tournament_id,
-        t.name as tournament_name,
-        t.tournament_type,
-        ROW_NUMBER() OVER (PARTITION BY pm.player_id ORDER BY gm.game_date DESC) as game_number
-    FROM player_mapping pm
-    JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
-    JOIN tournaments t ON gm.tournament_id = t.tournament_id
-    WHERE pm.player_id = %s
-),
+                    recent_games AS (
+                        SELECT 
+                            pm.player_id,
+                            pm.platform_game_id,
+                            gm.game_date,
+                            gm.map,
+                            pm.agent_name,
+                            pm.average_combat_score,
+                            pm.kills,
+                            pm.deaths,
+                            pm.assists,
+                            t.tournament_id,
+                            t.name as tournament_name,
+                            t.tournament_type,
+                            ROW_NUMBER() OVER (PARTITION BY pm.player_id ORDER BY gm.game_date DESC) as game_number
+                        FROM player_mapping pm
+                        JOIN game_mapping gm ON pm.platform_game_id = gm.platform_game_id
+                        JOIN tournaments t ON gm.tournament_id = t.tournament_id
+                        WHERE pm.player_id = %s
+                    ),
 
-recent_form AS (
-    SELECT 
-        player_id,
-        COUNT(*) as recent_matches,
-        AVG(kills::float) as recent_avg_kills,
-        AVG(deaths::float) as recent_avg_deaths,
-        AVG(assists::float) as recent_avg_assists,
-        AVG(combat_score::float) as recent_avg_combat_score,
-        json_agg(
-            jsonb_build_object(
-                'game_id', platform_game_id,
-                'date', game_date,
-                'map', map,
-                'agent', agent_name,
-                'combat_score', combat_score,
-                'kda', jsonb_build_object(
-                    'kills', kills,
-                    'deaths', deaths,
-                    'assists', assists
-                ),
-                'tournament_info', jsonb_build_object(
-                    'tournament_id', tournament_id,
-                    'tournament_name', tournament_name,
-                    'tournament_type', tournament_type
-                )
-            )
-            ORDER BY game_date DESC
-        ) as recent_games
-    FROM recent_games
-    WHERE game_number <= 5
-    GROUP BY player_id
-),
+                    recent_form AS (
+                        SELECT 
+                            player_id,
+                            COUNT(*) as recent_matches,
+                            AVG(kills::float) as recent_avg_kills,
+                            AVG(deaths::float) as recent_avg_deaths,
+                            AVG(assists::float) as recent_avg_assists,
+                            AVG(average_combat_score::float) as recent_avg_combat_score,
+                            json_agg(
+                                jsonb_build_object(
+                                    'game_id', platform_game_id,
+                                    'date', game_date,
+                                    'map', map,
+                                    'agent', agent_name,
+                                    'combat_score', average_combat_score,
+                                    'kda', jsonb_build_object(
+                                        'kills', kills,
+                                        'deaths', deaths,
+                                        'assists', assists
+                                    ),
+                                    'tournament_info', jsonb_build_object(
+                                        'tournament_id', tournament_id,
+                                        'tournament_name', tournament_name,
+                                        'tournament_type', tournament_type
+                                    )
+                                )
+                                ORDER BY game_date DESC
+                            ) as recent_games
+                        FROM recent_games
+                        WHERE game_number <= 5
+                        GROUP BY player_id
+                    ),
 
--- Final aggregation to ensure single row
-final_stats AS (
-    SELECT 
-        pb.*,
-        COALESCE(
-            (SELECT json_agg(row_to_json(a)) FROM agent_stats a WHERE a.player_id = pb.player_id),
-            '[]'::json
-        ) as agent_statistics,
-        COALESCE(
-            (SELECT json_agg(row_to_json(m)) FROM map_stats m WHERE m.player_id = pb.player_id),
-            '[]'::json
-        ) as map_statistics,
-        COALESCE(
-            (SELECT json_agg(
-                jsonb_build_object(
-                    'tournament_id', t.tournament_id,
-                    'tournament_name', t.tournament_name,
-                    'year', t.year,
-                    'tournament_type', t.tournament_type,
-                    'games_played', t.games_played,
-                    'avg_kills', t.avg_kills,
-                    'avg_deaths', t.avg_deaths,
-                    'avg_assists', t.avg_assists,
-                    'avg_combat_score', t.avg_combat_score,
-                    'agent_usage', (
-                        SELECT json_agg(
-                            jsonb_build_object(
-                                'agent_name', ta.agent_name,
-                                'games_played', ta.agent_games_played,
-                                'avg_combat_score', ta.agent_avg_combat_score
-                            )
-                        )
-                        FROM tournament_agents ta 
-                        WHERE ta.tournament_id = t.tournament_id 
-                        AND ta.player_id = pb.player_id
+                    -- Final aggregation to ensure single row
+                    final_stats AS (
+                        SELECT 
+                            pb.*,
+                            COALESCE(
+                                (SELECT json_agg(row_to_json(a)) FROM agent_stats a WHERE a.player_id = pb.player_id),
+                                '[]'::json
+                            ) as agent_statistics,
+                            COALESCE(
+                                (SELECT json_agg(row_to_json(m)) FROM map_stats m WHERE m.player_id = pb.player_id),
+                                '[]'::json
+                            ) as map_statistics,
+                            COALESCE(
+                                (SELECT json_agg(
+                                    jsonb_build_object(
+                                        'tournament_id', t.tournament_id,
+                                        'tournament_name', t.tournament_name,
+                                        'year', t.year,
+                                        'tournament_type', t.tournament_type,
+                                        'games_played', t.games_played,
+                                        'avg_kills', t.avg_kills,
+                                        'avg_deaths', t.avg_deaths,
+                                        'avg_assists', t.avg_assists,
+                                        'avg_combat_score', t.avg_combat_score,
+                                        'agent_usage', (
+                                            SELECT json_agg(
+                                                jsonb_build_object(
+                                                    'agent_name', ta.agent_name,
+                                                    'games_played', ta.agent_games_played,
+                                                    'avg_combat_score', ta.agent_avg_combat_score
+                                                )
+                                            )
+                                            FROM tournament_agents ta 
+                                            WHERE ta.tournament_id = t.tournament_id 
+                                            AND ta.player_id = pb.player_id
+                                        )
+                                    )
+                                )
+                                FROM tournament_stats t 
+                                WHERE t.player_id = pb.player_id),
+                                '[]'::json
+                            ) as tournament_history,
+                            COALESCE(
+                                (SELECT row_to_json(a) FROM advanced_stats a WHERE a.player_id = pb.player_id),
+                                '{}'::json
+                            ) as advanced_metrics,
+                            COALESCE(
+                                (SELECT row_to_json(r) FROM recent_form r WHERE r.player_id = pb.player_id),
+                                '{}'::json
+                            ) as recent_performance
+                        FROM player_base pb
                     )
-                )
-            )
-            FROM tournament_stats t 
-            WHERE t.player_id = pb.player_id),
-            '[]'::json
-        ) as tournament_history,
-        COALESCE(
-            (SELECT row_to_json(a) FROM advanced_stats a WHERE a.player_id = pb.player_id),
-            '{}'::json
-        ) as advanced_metrics,
-        COALESCE(
-            (SELECT row_to_json(r) FROM recent_form r WHERE r.player_id = pb.player_id),
-            '{}'::json
-        ) as recent_performance
-    FROM player_base pb
-)
 
-SELECT json_build_object(
-    'player_info', row_to_json(fs.*),
-    'agent_statistics', fs.agent_statistics,
-    'map_statistics', fs.map_statistics,
-    'tournament_history', fs.tournament_history,
-    'advanced_metrics', fs.advanced_metrics,
-    'recent_performance', fs.recent_performance
-) as player_complete_stats
-FROM final_stats fs;
+                    SELECT json_build_object(
+                        'player_info', row_to_json(fs.*),
+                        'agent_statistics', fs.agent_statistics,
+                        'map_statistics', fs.map_statistics,
+                        'tournament_history', fs.tournament_history,
+                        'advanced_metrics', fs.advanced_metrics,
+                        'recent_performance', fs.recent_performance
+                    ) as player_complete_stats
+                    FROM final_stats fs;
                 """
                 
                 cur.execute(stats_query, (player_id,) * 7)
@@ -303,7 +348,9 @@ async def bedrock_stats_handler(response, conversation):
                 None,
                 get_player_comprehensive_stats,
                 input_data.get('player_identifier'),
-                input_data.get('is_handle', True)
+                input_data.get('first_name'),
+                input_data.get('last_name'),
+                input_data.get('search_type', 'handle')
             )
 
             return json.dumps(result, default=str)
@@ -320,10 +367,8 @@ async def bedrock_stats_handler(response, conversation):
 async def anthropic_stats_handler(response, conversation):
     """Handler for Anthropic responses"""
     try:
-        # Find tool_use content block
         tool_use_blocks = [content for content in response.content if content.type == 'tool_use']
         if tool_use_blocks:
-            # Get the first tool use block
             tool_block = tool_use_blocks[0]
             tool_input = tool_block.input
             
@@ -331,17 +376,18 @@ async def anthropic_stats_handler(response, conversation):
                 None,
                 get_player_comprehensive_stats,
                 tool_input.get('player_identifier'),
-                tool_input.get('is_handle', True)
+                tool_input.get('first_name'),
+                tool_input.get('last_name'),
+                tool_input.get('search_type', 'handle')
             )
 
-            # Return in the correct format matching the documentation
             return {
                 "role": "user",
                 "content": [
                     {
                         "type": "tool_result",
-                        "tool_use_id": tool_block.id,  # This is the correct field name
-                        "content": json.dumps(result, default=str)  # Direct content string
+                        "tool_use_id": tool_block.id,
+                        "content": json.dumps(result, default=str)
                     }
                 ]
             }
@@ -379,20 +425,27 @@ def setup_player_analyst_agent(use_anthropic=False,
                 'properties': {
                     'player_identifier': {
                         'type': 'string',
-                        'description': 'Player handle or ID to look up. Can be partial handle for fuzzy matching.'
+                        'description': 'Player handle to look up when using handle search'
                     },
-                    'is_handle': {
-                        'type': 'boolean',
-                        'description': 'True if player_identifier is a handle, False if it\'s an ID. Defaults to True.'
+                    'first_name': {
+                        'type': 'string',
+                        'description': 'Player first name when using name search'
+                    },
+                    'last_name': {
+                        'type': 'string',
+                        'description': 'Player last name when using name search'
+                    },
+                    'search_type': {
+                        'type': 'string',
+                        'description': 'Type of search to perform ("handle" or "name"). Defaults to "handle"'
                     }
-                },
-                'required': ['player_identifier']
+                }
             }
         }],
         'useToolHandler': anthropic_stats_handler
     }
 
-    # Bedrock tool format
+    # Bedrock tool format 
     bedrock_tool = {
         'tool': [{
             'toolSpec': {
@@ -410,11 +463,19 @@ def setup_player_analyst_agent(use_anthropic=False,
                         'properties': {
                             'player_identifier': {
                                 'type': 'string',
-                                'description': 'Player handle or ID to look up. Can be partial handle for fuzzy matching.'
+                                'description': 'Player handle to look up when using handle search'
                             },
-                            'is_handle': {
-                                'type': 'boolean',
-                                'description': 'True if player_identifier is a handle, False if it\'s an ID. Defaults to True.'
+                            'first_name': {
+                                'type': 'string',
+                                'description': 'Player first name when using name search'
+                            },
+                            'last_name': {
+                                'type': 'string',
+                                'description': 'Player last name when using name search'
+                            },
+                            'search_type': {
+                                'type': 'string',
+                                'description': 'Type of search to perform ("handle" or "name"). Defaults to "handle"'
                             }
                         }
                     }
@@ -445,8 +506,8 @@ def setup_player_analyst_agent(use_anthropic=False,
         options = BedrockLLMAgentOptions(
             name='Player Analysis Agent',
             description='An agent for comprehensive player analysis and statistics. Use this agent when the user asks about specific players or asks follow up questions to a team building prompt.',
-            model_id='anthropic.claude-3-sonnet-20240229-v1:0',
-            region='us-east-1',
+            model_id='anthropic.claude-3-5-sonnet-20240620-v1:0',
+            region='us-west-2',
             streaming=True,
             inference_config={
                 'maxTokens': 4096,
@@ -478,6 +539,7 @@ def setup_player_analyst_agent(use_anthropic=False,
             To analyze players, you must first fetch their data using the get_player_stats tool:
             - Always call this tool when a player is mentioned or analysis is needed
             - Use player's handle as the identifier when possible
+            - If the tool call fails or the user's input appears to contain a first or last name, use name as the search type.
             - If no handle is provided or no valid data is returned from the tool call, try searching for the player's handle
             or player id within the chat history. If you are still unable to retrieve any data, ask the user to double check
             the handle being provided
@@ -550,6 +612,7 @@ def setup_player_analyst_agent(use_anthropic=False,
             <error_handling>
             When you encounter:
             - Missing data: Acknowledge what's missing
+            - Ask the user to clarify if they provided a name, handle, or player id
             - Small sample sizes: Note limited data
             - No data: Clearly state inability to analyze
 
