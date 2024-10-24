@@ -61,17 +61,7 @@ pydantic_core==2.23.4
 pydeck==0.9.1
 Pygments==2.18.0
 PyGObject==3.42.1
-PyHamcrest==2.0.2
-PyJWT==2.3.0
-pyOpenSSL==21.0.0
-pyparsing==2.4.7
-pyrsistent==0.18.1
 pyserial==3.5
-python-apt==2.4.0+ubuntu4
-python-dateutil==2.9.0.post0
-python-debian==0.1.43+ubuntu1.1
-python-dotenv==1.0.1
-python-magic==0.4.24
 pytz==2022.1
 PyYAML==5.4.1
 requests==2.32.3
