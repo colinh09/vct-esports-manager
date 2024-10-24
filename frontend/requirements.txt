@@ -76,5 +76,3 @@ streamlit==1.39.0
 streamlit-chat==0.1.1
 systemd-python==234
 tqdm==4.66.5
-wheel==0.37.1
-zipp==1.0.0
