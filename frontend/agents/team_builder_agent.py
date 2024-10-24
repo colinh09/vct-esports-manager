@@ -541,7 +541,7 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None, rds_da
         options = AnthropicAgentOptions(
             name='Team Builder Agent',
             description='An agent for building optimal team compositions based on tournament data',
-            model_id='claude-3-sonnet-20240229',
+            model_id='claude-3-5-sonnet-20241022',
             api_key=anthropic_api_key,
             streaming=False,
             save_chat=True,
