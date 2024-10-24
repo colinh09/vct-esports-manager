@@ -3,7 +3,6 @@ import asyncio
 import os
 import boto3
 from typing import Optional, Dict, Any
-from dotenv import load_dotenv
 from multi_agent_orchestrator.orchestrator import MultiAgentOrchestrator, OrchestratorConfig
 from multi_agent_orchestrator.agents import AgentResponse, ChainAgent, ChainAgentOptions
 from multi_agent_orchestrator.classifiers import BedrockClassifier, BedrockClassifierOptions, AnthropicClassifier, AnthropicClassifierOptions
