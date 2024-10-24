@@ -1,7 +1,6 @@
 import streamlit as st
 import asyncio
 from agents.vct_agent import VCTAgentSystem
-from st_chat_message import message
 import time
 import os
 
@@ -102,7 +101,7 @@ def main():
     # Create three columns with the middle one taking 70% of the width
     left_col, middle_col, right_col = st.columns([0.05, 0.9, 0.05])
     
-    # Add CSS and JavaScript to handle styling and prevent auto-scrolling
+    # Add CSS to handle styling
     st.markdown(
         """
         <style>
@@ -117,8 +116,8 @@ def main():
             width: 0px;
         }
 
-        /* Add spacing between messages */
-        .stChatMessage {
+        /* Style chat messages */
+        [data-testid="stChatMessage"] {
             margin-bottom: 1rem;
             font-size: 24px !important;
         }
@@ -152,8 +151,8 @@ def main():
         }
 
         /* Remove scrollbars and fix message display */
-        .stChatMessage, 
-        .stChatMessage > div,
+        [data-testid="stChatMessage"], 
+        [data-testid="stChatMessage"] > div,
         .stMarkdown,
         [data-testid="stMarkdownContainer"] {
             overflow: visible !important;
@@ -162,40 +161,11 @@ def main():
         }
 
         /* Ensure content wraps properly */
-        .stChatMessage p {
+        [data-testid="stChatMessage"] p {
             white-space: pre-wrap !important;
             word-wrap: break-word !important;
         }
-
-        /* Disable smooth scrolling behavior */
-        * {
-            scroll-behavior: auto !important;
-        }
         </style>
-        <script>
-            // Disable Streamlit's automatic scrolling
-            const disableAutoScroll = () => {
-                const style = document.createElement('style');
-                style.textContent = `
-                    .main > div { scroll-behavior: auto !important; }
-                    .element-container { scroll-margin-top: 0 !important; }
-                `;
-                document.head.appendChild(style);
-                
-                // Override Streamlit's scroll function
-                if (window.ScrollIntoViewObserver) {
-                    window.ScrollIntoViewObserver.prototype.observe = function() {};
-                    window.ScrollIntoViewObserver.prototype.disconnect = function() {};
-                }
-            };
-            
-            // Run once DOM is loaded
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', disableAutoScroll);
-            } else {
-                disableAutoScroll();
-            }
-        </script>
         """,
         unsafe_allow_html=True
     )
@@ -210,56 +180,33 @@ def main():
         # Display chat messages
         for msg in st.session_state.messages:
             is_user = msg["role"] == "user"
-            msg_key = msg.get("key", get_unique_key())
-            if "key" not in msg:
-                msg["key"] = msg_key
-            if is_user:
-                message(msg["content"],
-                    is_user=True,
-                    key=msg_key,
-                    logo="https://api.dicebear.com/9.x/thumbs/svg?seed=Nolan&backgroundColor=69d2e7,b6e3f4,c0aede,d1d4f9,f1f4dc,f88c49,ffd5dc,ffdfbf&backgroundType=gradientLinear&eyes=variant2W16,variant3W10,variant3W12,variant3W14,variant3W16,variant4W10,variant4W12,variant4W14,variant4W16,variant5W10,variant5W12,variant5W14,variant5W16,variant6W10,variant6W12,variant6W14,variant6W16,variant7W10,variant7W12,variant7W14,variant7W16,variant8W10,variant8W12,variant8W14,variant8W16,variant9W10,variant9W12,variant9W14,variant9W16&mouth=variant1,variant2,variant3,variant4&shapeColor=f1f4dc"
-                    )
-            else:
-                message(msg["content"],
-                    is_user=False,
-                    key=msg_key,
-                    logo="https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Aidan&backgroundColor=e53935&eyes=eva"
-                    )
+            with st.chat_message("user" if is_user else "assistant"):
+                st.write(msg["content"])
     
-    # Chat input (using Streamlit's default positioning)
+    # Chat input
     if prompt := st.chat_input("Ask me anything about Valorant esports...", key="chat_input"):
-        # Generate a unique key for the new message
-        user_msg_key = get_unique_key()
-        
         # Add user message to chat
         st.session_state.messages.append({
             "role": "user", 
-            "content": prompt,
-            "key": user_msg_key
+            "content": prompt
         })
         
         with middle_col:
-            message(prompt, 
-                   is_user=True, 
-                   key=user_msg_key,
-                   logo="https://api.dicebear.com/9.x/thumbs/svg?seed=Nolan&backgroundColor=69d2e7,b6e3f4,c0aede,d1d4f9,f1f4dc,f88c49,ffd5dc,ffdfbf&backgroundType=gradientLinear&eyes=variant2W16,variant3W10,variant3W12,variant3W14,variant3W16,variant4W10,variant4W12,variant4W14,variant4W16,variant5W10,variant5W12,variant5W14,variant5W16,variant6W10,variant6W12,variant6W14,variant6W16,variant7W10,variant7W12,variant7W14,variant7W16,variant8W10,variant8W12,variant8W14,variant8W16,variant9W10,variant9W12,variant9W14,variant9W16&mouth=variant1,variant2,variant3,variant4&shapeColor=f1f4dc"
-                   )
+            # Display user message
+            with st.chat_message("user"):
+                st.write(prompt)
             
             # Get and display assistant response
             with st.spinner("Thinking..."):
                 result = asyncio.run(process_message(prompt))
                 response_content = result.get('content', 'There was an error processing your message. Please refresh the page and try again.')
                 
-                assistant_msg_key = get_unique_key()
-                message(response_content, 
-                       is_user=False, 
-                       key=assistant_msg_key,
-                       logo="https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Aidan&backgroundColor=e53935&eyes=eva"
-                       )
+                with st.chat_message("assistant"):
+                    st.write(response_content)
+                
                 st.session_state.messages.append({
                     "role": "assistant",
-                    "content": response_content,
-                    "key": assistant_msg_key
+                    "content": response_content
                 })
 
 if __name__ == "__main__":
