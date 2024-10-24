@@ -133,13 +133,6 @@ def main():
             padding-bottom: 5rem;
         }
 
-        /* Control image sizes in markdown */
-        .element-container img {
-            max-width: 300px !important;
-            height: auto !important;
-            display: inline-block !important;
-        }
-
         /* Style for markdown tables */
         table {
             width: auto !important;
