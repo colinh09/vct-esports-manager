@@ -13,8 +13,6 @@ from .team_builder_agent import setup_team_builder_agent
 from .final_agent import create_vct_final_agent
 from .custom.custom_orchestrator import CustomMultiAgentOrchestrator
 
-load_dotenv()
-
 class VCTAgentSystem:
     def __init__(self, aws_access_key: str, aws_secret_key: str, anthropic_api_key: str, aws_region: str = 'us-east-1'):
         self.api_key = anthropic_api_key
