@@ -2,7 +2,7 @@ from typing import List, Dict, Any, AsyncIterable, Optional, Union
 from dataclasses import dataclass
 from multi_agent_orchestrator.agents import BedrockLLMAgent, BedrockLLMAgentOptions
 from multi_agent_orchestrator.types import ConversationMessage, ParticipantRole
-from multi_agent_orchestrator.utils import conversation_to_dict
+from multi_agent_orchestrator.utils import conversation_to_dict, Logger
 from datetime import datetime
 import json
 
@@ -55,25 +55,35 @@ class CustomBedrockLLMAgent(BedrockLLMAgent):
             recursion_count = 0
 
             while continue_with_tools and max_recursions > 0:
+                Logger.info(recursion_count)
                 recursion_count += 1
                 
                 if self.streaming:
                     bedrock_response = await self.handle_streaming_response(converse_cmd)
                 else:
+                    Logger.info("Sending a msg")
                     bedrock_response = await self.handle_single_response(converse_cmd)
 
                 conversation.append(bedrock_response)
 
                 if any('toolUse' in content for content in bedrock_response.content):
-                    tool_result = await self.tool_config['useToolHandler'](bedrock_response, conversation)
-                    json_str= tool_result
-                    tool_data = json.loads(json_str)
+                    Logger.info(bedrock_response.content)
                     
+                    # Find the content item that contains toolUse
+                    tool_use_content = next(
+                        content for content in bedrock_response.content 
+                        if 'toolUse' in content
+                    )
+                    
+                    tool_result = await self.tool_config['useToolHandler'](bedrock_response, conversation)
+                    json_str = tool_result
+                    tool_data = json.loads(json_str)
+                    Logger.info(tool_data)
                     tool_response = ConversationMessage(
                         role=ParticipantRole.USER.value,
                         content=[{
                             'toolResult': {
-                                'toolUseId': bedrock_response.content[0]['toolUse']['toolUseId'],
+                                'toolUseId': tool_use_content['toolUse']['toolUseId'],
                                 'content': [{
                                     'json': tool_data
                                 }]
@@ -88,9 +98,25 @@ class CustomBedrockLLMAgent(BedrockLLMAgent):
                 max_recursions -= 1
                 converse_cmd['messages'] = conversation_to_dict(conversation)
 
+            Logger.info("Returning final msg")
             return final_message
 
         if self.streaming:
             return await self.handle_streaming_response(converse_cmd)
 
         return await self.handle_single_response(converse_cmd)
+
+    async def handle_single_response(self, converse_input: Dict[str, Any]) -> ConversationMessage:
+        try:
+            Logger.info("About to send to Bedrock with input:")
+            Logger.info(converse_input)
+            response = self.client.converse(**converse_input)
+            if 'output' not in response:
+                raise ValueError("No output received from Bedrock model")
+            return ConversationMessage(
+                role=response['output']['message']['role'],
+                content=response['output']['message']['content']
+            )
+        except Exception as error:
+            Logger.error(f"Error invoking Bedrock model:{str(error)}")
+            raise error

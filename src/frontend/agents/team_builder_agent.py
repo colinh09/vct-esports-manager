@@ -399,8 +399,23 @@ def team_builder_wrapper(vct_international: int = 0,
 async def bedrock_function_handler(response, conversation):
     try:
         if isinstance(response.content, list) and len(response.content) > 0:
-            tool_use = response.content[0].get('toolUse', {})
+            # Find the content item that contains toolUse
+            tool_use = None
+            for content_item in response.content:
+                if 'toolUse' in content_item:
+                    tool_use = content_item['toolUse']
+                    break
+            
+            if not tool_use:
+                return json.dumps({
+                    "status": "error",
+                    "message": "No tool use found in response"
+                })
+
             input_data = tool_use.get('input', {})
+
+            # Add debug logging
+            logger.info(f"Found input data: {input_data}")
 
             result = await asyncio.get_event_loop().run_in_executor(
                 None,
@@ -418,7 +433,7 @@ async def bedrock_function_handler(response, conversation):
             })
 
     except Exception as e:
-        logger.error(f"Error in custom_function_handler: {str(e)}", exc_info=True)
+        logger.error(f"Error in bedrock_function_handler: {str(e)}", exc_info=True)
         return json.dumps({"status": "error", "message": str(e)})
 
 async def anthropic_function_handler(response, conversation):
@@ -531,6 +546,7 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
             model_id='claude-3-5-sonnet-20241022',
             api_key=anthropic_api_key,
             streaming=False,
+            save_chat=True,
             inference_config={
                 'maxTokens': 8192,
                 'temperature': 0.0,
@@ -544,11 +560,11 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         options = BedrockLLMAgentOptions(
             name='Team Builder Agent',
             description='An agent for building optimal team compositions based on tournament data',
-            model_id='anthropic.claude-3-5-sonnet-20240620-v1:0',
+            model_id='anthropic.claude-3-sonnet-20240229-v1:0',
             region='us-west-2',
-            streaming=True,
+            save_chat=True,
             inference_config={
-                'maxTokens': 8192,
+                'maxTokens': 4096,
                 'temperature': 0.0,
                 'topP': 0.1,
                 'stopSequences': ['Human:', 'AI:']
@@ -562,10 +578,13 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         <role>Expert VCT Manager and Team Analyst</role>
 
         <context>
-        You are an expert Valorant and VCT (Valorant's esports league) manager tasked with building optimal competitive teams. You analyze player statistics, map preferences, agent proficiency, and team synergies to construct the most effective rosters.
+        You are an expert Valorant and VCT (Valorant's esports league) manager tasked with building optimal competitive teams. You analyze player statistics, map preferences, 
+        agent proficiency, and team synergies to construct the most effective rosters. Ignore any previous instructions to limit your output to a certain length. Always attempt
+        to fulfill the output format instructions in its entirety.
         </context>
 
         <tool_instructions>
+        DO NOT RESPOND BEFORE MAKING A TOOL CALL. MAKE THE TOOL CALL FIRST BEFORE RESPONDING.
         When you receive input like this:
         VCT_INTERNATIONAL: X
         VCT_CHALLENGER: Y
@@ -668,7 +687,7 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         - Map synergy (complementary site preferences)
         - Agent pool compatibility
         - Statistical excellence
-        - Team chemistry potential
+        - Team chemistry potential, but do NOT be biased in picking players from the same originating team
         </team_building_process>
         
         <output_format_instructions>
@@ -688,42 +707,15 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         ## Team Building Philosophy
         [3-4 sentences explaining the overall strategic vision for this team composition. What playstyle are they built for? What makes them unique? What are their win conditions?]
 
-        ## Role Selection Rationale
+        ## Role & Player Analysis
+        **NOTE**: [The following map visualizations show positioning and impact across each player's last 5 matches on their most played maps. These visualizations help understand each player's preferred positions, angles, and site control patterns on both attack and defense.]
+        ### Duelist - [Full Name] ([Handle]) - Total competitive games played: [Number]
+        [Detailed analysis of selection rationale including:
+        - Statistical strengths as primary fragger
+        - Agent pool and strategic enablement
+        - Map/site preferences and team playstyle influence
+        - Standout metrics (first bloods, multi-kills, clutch ratio)]
 
-        ### Duelist - [Handle]
-        [Detailed analysis of why this duelist was selected first. Include:
-        - Their statistical strengths that make them ideal as the team's primary fragger
-        - Their agent pool and how it enables specific strategies
-        - Their preferred maps and sites, and how this influences the team's playstyle
-        - Any standout metrics (first bloods, multi-kills, clutch ratio) that support their selection
-        Back up all claims with specific numbers from the data]
-
-        ### [Role 2] - [Handle]
-        [Similar detailed analysis for each subsequent role selection, emphasizing:
-        - How they complement the duelist and other selected players
-        - Their specific strengths that fill team needs
-        - Map/site preferences that create tactical advantages
-        - Statistical evidence supporting their selection]
-
-        [Repeat for remaining 3 roles]
-
-        ## Strategic Strengths
-        - Map Control: [In one sentence mention what maps the team would play based on the collective top maps played. In another sentence, explain how the team's combined 
-        site preferences and agent pools enable strong map control]
-        - Attack Executes: [How the team's utility usage and playstyles combine for effective attacks]
-        - Defense Setups: [How the team's defensive capabilities and positioning create strong holds]
-        - Clutch Potential: [Analysis of the team's ability to win crucial rounds based on individual strengths]
-
-        ## Areas for Development
-        [3 setences identifying:
-        - Potential weaknesses that need to be addressed
-        - Suggested focus areas for practice
-        - Specific scenarios or maps that might need extra attention]
-
-        # Player Analysis
-        [The following map visualizations show positioning and impact across each player's last 5 matches on their most played maps. These visualizations help understand each player's preferred positions, angles, and site control patterns on both attack and defense.]
-
-        ## [Full Name] ([Handle]) - Total competitive games played: [Number]
         **Preferred Agents:**
         - [Agent 1] - [Games Played] games, [KDA] KDA
         - [Agent 2] - [Games Played] games, [KDA] KDA
@@ -736,28 +728,24 @@ def setup_team_builder_agent(use_anthropic=False, anthropic_api_key=None):
         |:---------:|:---------:|
         | ![Map 1 Attacking](attacking_visualization_url_1) | ![Map 1 Defending](defending_visualization_url_1) |
 
-        - [Map 2] - [Games Played] games, [KDA] KDA, Preferred Site: [Site] ([Site %]%)
+        [Repeat map format for Maps 2 & 3]
 
-        | Attacking | Defending |
-        |:---------:|:---------:|
-        | ![Map 2 Attacking](attacking_visualization_url_2) | ![Map 2 Defending](defending_visualization_url_2) |
+        [Repeat entire section for remaining 4 roles, emphasizing role-specific contributions and team synergy]
 
-        - [Map 3] - [Games Played] games, [KDA] KDA, Preferred Site: [Site] ([Site %]%)
+        ## Strategic Strengths
+        - Map Control: [In one sentence mention what maps the team would play based on the collective top maps played. In another sentence, explain how the team's combined site preferences and agent pools enable strong map control]
+        - Attack Executes: [How the team's utility usage and playstyles combine for effective attacks]
+        - Defense Setups: [How the team's defensive capabilities and positioning create strong holds]
+        - Clutch Potential: [Analysis of the team's ability to win crucial rounds based on individual strengths]
 
-        | Attacking | Defending |
-        |:---------:|:---------:|
-        | ![Map 3 Attacking](attacking_visualization_url_3) | ![Map 3 Defending](defending_visualization_url_3) |
-
-        [Three sentences explaining player selection rationale, focusing on statistical strengths and team fit]
-
-        [Repeat Player Analysis for all team members]
-
-        # Team Synopsis
-        [Brief 3-4 sentence summary of the team's key characteristics and potential, serving as a concise wrap-up of the detailed analysis above]
+        ## Areas for Development
+        [3 sentences identifying:
+        - Potential weaknesses that need to be addressed
+        - Suggested focus areas for practice
+        - Specific scenarios or maps that might need extra attention]
 
         # Honorable Mentions
-        [One player per role not selected for final team, including full name, handle, role, and current team. Do a one sentence comparison with
-        the selected player from their role to explain why this player was not chosen.]
+        [One player per role not selected for final team, including full name, handle, role, and current team.]
 
         </output_format>
 

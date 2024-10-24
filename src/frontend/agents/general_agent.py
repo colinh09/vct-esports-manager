@@ -41,12 +41,14 @@ def get_player_comprehensive_stats(player_identifier: Optional[str] = None,
                         return {"status": "error", "message": "Player identifier required for handle search"}
                     
                     player_query = """
-                    SELECT DISTINCT ON (LOWER(handle)) 
-                        player_id, 
-                        similarity(LOWER(handle), LOWER(%s)) AS sim
-                    FROM players
-                    WHERE similarity(LOWER(handle), LOWER(%s)) > 0.3
-                    ORDER BY LOWER(handle), updated_at DESC, sim DESC
+                    SELECT player_id, similarity(LOWER(handle), LOWER(%s)) AS sim
+                    FROM (
+                        SELECT DISTINCT ON (LOWER(handle)) *
+                        FROM players
+                        WHERE similarity(LOWER(handle), LOWER(%s)) > 0.3
+                        ORDER BY LOWER(handle), updated_at DESC
+                    ) subquery
+                    ORDER BY sim DESC
                     LIMIT 1;
                     """ 
                     cur.execute(player_query, (player_identifier, player_identifier))
@@ -55,29 +57,21 @@ def get_player_comprehensive_stats(player_identifier: Optional[str] = None,
                         return {"status": "error", "message": "Either first_name or last_name required for name search"}
                     
                     player_query = """
-                    SELECT DISTINCT ON (
-                        CASE 
-                            WHEN similarity(LOWER(first_name), LOWER(%s)) > similarity(LOWER(last_name), LOWER(%s))
-                            THEN LOWER(first_name)
-                            ELSE LOWER(last_name)
-                        END
-                    )
-                        player_id,
-                        greatest(
-                            similarity(LOWER(first_name), LOWER(%s)),
-                            similarity(LOWER(last_name), LOWER(%s))
-                        ) AS sim
-                    FROM players
-                    WHERE similarity(LOWER(first_name), LOWER(%s)) > 0.3
-                    OR similarity(LOWER(last_name), LOWER(%s)) > 0.3
-                    ORDER BY 
-                        CASE 
-                            WHEN similarity(LOWER(first_name), LOWER(%s)) > similarity(LOWER(last_name), LOWER(%s))
-                            THEN LOWER(first_name)
-                            ELSE LOWER(last_name)
-                        END,
-                        updated_at DESC,
-                        sim DESC
+                    SELECT player_id, greatest_sim
+                    FROM (
+                        SELECT DISTINCT ON (COALESCE(LOWER(first_name), '') || COALESCE(LOWER(last_name), '')) 
+                            player_id,
+                            greatest(
+                                similarity(LOWER(first_name), LOWER(%s)),
+                                similarity(LOWER(last_name), LOWER(%s))
+                            ) AS greatest_sim
+                        FROM players
+                        WHERE similarity(LOWER(first_name), LOWER(%s)) > 0.3
+                        OR similarity(LOWER(last_name), LOWER(%s)) > 0.3
+                        ORDER BY COALESCE(LOWER(first_name), '') || COALESCE(LOWER(last_name), ''), 
+                                updated_at DESC
+                    ) subquery
+                    ORDER BY greatest_sim DESC
                     LIMIT 1;
                     """
                     params = [first_name or '', last_name or '', first_name or '', last_name or '']
@@ -341,8 +335,23 @@ async def bedrock_stats_handler(response, conversation):
     """Handler for Bedrock LLM responses"""
     try:
         if isinstance(response.content, list) and len(response.content) > 0:
-            tool_use = response.content[0].get('toolUse', {})
+            # Find the content item that contains toolUse
+            tool_use = None
+            for content_item in response.content:
+                if 'toolUse' in content_item:
+                    tool_use = content_item['toolUse']
+                    break
+            
+            if not tool_use:
+                return json.dumps({
+                    "status": "error",
+                    "message": "No tool use found in response"
+                })
+
             input_data = tool_use.get('input', {})
+
+            # Add some debug logging
+            logger.info(f"Found input data: {input_data}")
 
             result = await asyncio.get_event_loop().run_in_executor(
                 None,
@@ -493,6 +502,7 @@ def setup_player_analyst_agent(use_anthropic=False,
             model_id='claude-3-5-sonnet-20241022',
             api_key=anthropic_api_key,
             streaming=False,
+            save_chat=True,
             inference_config={
                 'maxTokens': 4096,
                 'temperature': 0.0,
@@ -508,7 +518,7 @@ def setup_player_analyst_agent(use_anthropic=False,
             description='An agent for comprehensive player analysis and statistics. Use this agent when the user asks about specific players or asks follow up questions to a team building prompt.',
             model_id='anthropic.claude-3-5-sonnet-20240620-v1:0',
             region='us-west-2',
-            streaming=True,
+            save_chat=True,
             inference_config={
                 'maxTokens': 4096,
                 'temperature': 0.0,
@@ -539,6 +549,7 @@ def setup_player_analyst_agent(use_anthropic=False,
             To analyze players, you must first fetch their data using the get_player_stats tool:
             - Always call this tool when a player is mentioned or analysis is needed
             - Use player's handle as the identifier when possible
+            - IF you do not see any player handle or name in the user input, look at the chat history for the player the input is referencing.
             - If the tool call fails or the user's input appears to contain a first or last name, use name as the search type.
             - If no handle is provided or no valid data is returned from the tool call, try searching for the player's handle
             or player id within the chat history. If you are still unable to retrieve any data, ask the user to double check

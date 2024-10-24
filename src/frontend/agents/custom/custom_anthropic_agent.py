@@ -18,7 +18,7 @@ class CustomAnthropicAgent(AnthropicAgent):
                 return await super().process_request(input_text, user_id, session_id, chat_history, additional_params)
 
             Logger.info(f"[Tool Call] Processing request with tools for session {session_id}")
-            
+            Logger.info(chat_history)
             messages = [{"role": "user" if msg.role == ParticipantRole.USER.value else "assistant",
                         "content": msg.content[0]['text'] if msg.content else ''} for msg in chat_history]
             messages.append({"role": "user", "content": input_text})
