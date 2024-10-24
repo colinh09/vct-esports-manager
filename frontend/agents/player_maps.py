@@ -14,6 +14,7 @@ from decimal import Decimal
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from pathlib import Path 
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
