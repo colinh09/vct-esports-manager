@@ -55,7 +55,6 @@ def get_map_data(map_url: str):
         
         with open(json_path, 'r') as f:
             maps_data = json.load(f)
-        return maps_data
         
         for map_data in maps_data:
             if map_data['mapUrl'] == map_url:

@@ -36,6 +36,7 @@ def check_password():
                 
                 🔒 If you are a judge for the VCT Hackathon:
                 The password was provided in my submission details.
+                It can be obtained by the "upload a file" section!
                 
                 🚫 If you are not a judge:
                 This is a private application built for the VCT Hackathon.
